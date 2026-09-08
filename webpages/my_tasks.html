@@ -15,15 +15,15 @@
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="brand">
-        <span class="brand-mark">SQ</span>
+        <span class="brand-mark">TD</span>
         SideQuest
       </div>
 
       <nav class="sidebar-nav">
-        <a href="/" class="active">
+        <a href="/" class="{% if request.path == '/' %}active{% endif %}">
           <span>Homepage</span>
         </a>
-        <a href="/my-tasks">
+        <a href="/my-tasks" class="{% if request.path == '/my-tasks' %}active{% endif %}">
           <span>My Tasks</span>
         </a>
       </nav>
