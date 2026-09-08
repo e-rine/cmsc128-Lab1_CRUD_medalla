@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from flask import Flask, Blueprint, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash
 
 from backend.database import (
     init_db,
@@ -13,16 +13,10 @@ from backend.database import (
 )
 
 app = Flask(__name__, template_folder="webpages")
-app.secret_key = "dev-secret-key-change-this-later"  # needed for flash messages
+app.secret_key = "dev-secret-key-change-this-later"
 
-# ---------- Blueprints ----------
-# scripts/ and styles/ aren't Flask's default "static" folder, so url_for() needs
-# these two Blueprints registered to be able to resolve them.
-scripts_bp = Blueprint("scripts", __name__, static_folder="scripts", static_url_path="/scripts")
-styles_bp = Blueprint("styles", __name__, static_folder="styles", static_url_path="/styles")
-app.register_blueprint(scripts_bp)
-app.register_blueprint(styles_bp)
 
+# ---------- Template filters ----------
 
 @app.template_filter("format_deadline")
 def format_deadline(task):
@@ -39,13 +33,15 @@ def is_overdue(task):
     return dt < datetime.now() and not task["is_completed"]
 
 
-# ---------- Routes ----------
+# ---------- Helper ----------
 
 def redirect_back():
     """Redirect to the page the form was submitted from (keeps ?sort=&tag=&priority=
     intact), falling back to the plain my-tasks page if there's no referrer."""
     return redirect(request.referrer or url_for("my_tasks"))
 
+
+# ---------- Routes ----------
 
 @app.route("/")
 def index():
@@ -82,14 +78,13 @@ def add_task():
         return redirect_back()
 
     create_task(title, description, deadline_date, deadline_time, priority, category)
-    flash("Task added.", "success")
+    flash("Task added successfully.", "success")
     return redirect_back()
 
 
 @app.route("/edit-task/<int:task_id>", methods=["POST"])
 def edit_task(task_id):
-    task = get_task_by_id(task_id)
-    if task is None:
+    if get_task_by_id(task_id) is None:
         flash("That task no longer exists.", "error")
         return redirect_back()
 
@@ -111,20 +106,18 @@ def edit_task(task_id):
 
 @app.route("/delete-task/<int:task_id>", methods=["POST"])
 def delete_task_route(task_id):
-    task = get_task_by_id(task_id)
-    if task is None:
+    if get_task_by_id(task_id) is None:
         flash("That task no longer exists.", "error")
         return redirect_back()
 
     delete_task(task_id)
-    flash("Task deleted.", "success")
+    flash("Task deleted successfully.", "success")
     return redirect_back()
 
 
 @app.route("/toggle-task/<int:task_id>", methods=["POST"])
 def toggle_task(task_id):
-    task = get_task_by_id(task_id)
-    if task is None:
+    if get_task_by_id(task_id) is None:
         flash("That task no longer exists.", "error")
         return redirect_back()
 

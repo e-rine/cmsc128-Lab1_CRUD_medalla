@@ -6,7 +6,7 @@
   <title>My Tasks · To-Do List</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles/my_tasks.css"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/my_tasks.css') }}" />
 </head>
 <body>
 
@@ -23,7 +23,7 @@
         <a href="/">
           <span>Homepage</span>
         </a>
-        <a href="my-tasks" class="active">
+        <a href="/my-tasks" class="active">
           <span>My Tasks</span>
         </a>
       </nav>
@@ -107,7 +107,16 @@
           </div>
 
           {% for task in tasks %}
-          <article class="task-row{% if task['is_completed'] %} is-completed{% endif %}" id="task-{{ task['id'] }}">
+          <article
+            class="task-row{% if task['is_completed'] %} is-completed{% endif %}"
+            id="task-{{ task['id'] }}"
+            data-title="{{ task['title'] }}"
+            data-description="{{ task['description'] or '' }}"
+            data-deadline-date="{{ task['deadline_date'] }}"
+            data-deadline-time="{{ task['deadline_time'] }}"
+            data-priority="{{ task['priority'] }}"
+            data-category="{{ task['category'] }}"
+          >
             <form action="/toggle-task/{{ task['id'] }}" method="POST">
               <input type="checkbox" class="task-check" {% if task['is_completed'] %}checked{% endif %} onchange="this.form.submit()" />
             </form>
@@ -134,58 +143,10 @@
             <div class="task-menu">
               <button type="button" class="menu-trigger" onclick="toggleMenu({{ task['id'] }})">&#8942;</button>
               <div class="menu-dropdown" id="menu-{{ task['id'] }}">
-                <button type="button" onclick="toggleEditForm({{ task['id'] }})">Edit</button>
+                <button type="button" onclick="openEditModal({{ task['id'] }})">Edit</button>
                 <button type="button" class="danger-option" onclick="openDeleteModal({{ task['id'] }}, '{{ task['title']|replace("'", "\\'") }}')">Delete</button>
               </div>
             </div>
-
-            <!-- Edit form -->
-            <form class="edit-form" id="edit-form-{{ task['id'] }}" action="/edit-task/{{ task['id'] }}" method="POST">
-              <div class="form-row stack">
-                <div class="field">
-                  <label for="title-{{ task['id'] }}">Task title</label>
-                  <input type="text" id="title-{{ task['id'] }}" name="title" value="{{ task['title'] }}" required />
-                </div>
-                <div class="field">
-                  <label for="description-{{ task['id'] }}">Description</label>
-                  <textarea id="description-{{ task['id'] }}" name="description">{{ task['description'] or '' }}</textarea>
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="field">
-                  <label for="date-{{ task['id'] }}">Deadline date</label>
-                  <input type="date" id="date-{{ task['id'] }}" name="deadline_date" value="{{ task['deadline_date'] }}" required />
-                </div>
-                <div class="field">
-                  <label for="time-{{ task['id'] }}">Deadline time</label>
-                  <input type="time" id="time-{{ task['id'] }}" name="deadline_time" value="{{ task['deadline_time'] }}" required />
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="field">
-                  <label for="priority-{{ task['id'] }}">Priority</label>
-                  <select id="priority-{{ task['id'] }}" name="priority" required>
-                    <option value="low" {% if task['priority']=='low' %}selected{% endif %}>Low</option>
-                    <option value="medium" {% if task['priority']=='medium' %}selected{% endif %}>Medium</option>
-                    <option value="high" {% if task['priority']=='high' %}selected{% endif %}>High</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label for="category-{{ task['id'] }}">Category</label>
-                  <select id="category-{{ task['id'] }}" name="category" required>
-                    <option value="school" {% if task['category']=='school' %}selected{% endif %}>School</option>
-                    <option value="work" {% if task['category']=='work' %}selected{% endif %}>Work</option>
-                    <option value="personal" {% if task['category']=='personal' %}selected{% endif %}>Personal</option>
-                    <option value="finance" {% if task['category']=='finance' %}selected{% endif %}>Finance</option>
-                    <option value="other" {% if task['category']=='other' %}selected{% endif %}>Other</option>
-                  </select>
-                </div>
-              </div>
-              <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Save changes</button>
-                <button type="button" class="btn btn-ghost" onclick="toggleEditForm({{ task['id'] }})">Cancel</button>
-              </div>
-            </form>
           </article>
           {% else %}
           <div class="empty-state">No tasks yet.</div>
@@ -193,7 +154,7 @@
 
         </section>
 
-        
+
         <!-- Add task -->
         <section class="add-task-card">
           <h2>Add a task</h2>
@@ -248,8 +209,59 @@
     </div>
   </div>
 
-  
 
+  <!-- Shared edit modal (one for every task, filled in by JS) -->
+  <div class="modal-overlay" id="edit-modal">
+    <div class="modal-box">
+      <h3>Edit task</h3>
+      <form id="edit-form" method="POST">
+        <div class="form-row stack">
+          <div class="field">
+            <label for="edit-title">Task title</label>
+            <input type="text" id="edit-title" name="title" required />
+          </div>
+          <div class="field">
+            <label for="edit-description">Description</label>
+            <textarea id="edit-description" name="description"></textarea>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label for="edit-date">Deadline date</label>
+            <input type="date" id="edit-date" name="deadline_date" required />
+          </div>
+          <div class="field">
+            <label for="edit-time">Deadline time</label>
+            <input type="time" id="edit-time" name="deadline_time" required />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label for="edit-priority">Priority</label>
+            <select id="edit-priority" name="priority" required>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="edit-category">Category</label>
+            <select id="edit-category" name="category" required>
+              <option value="school">School</option>
+              <option value="work">Work</option>
+              <option value="personal">Personal</option>
+              <option value="finance">Finance</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- Delete confirmation modal -->
   <div class="modal-overlay" id="delete-modal">
@@ -278,6 +290,6 @@
       topbarDate.textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
     }
   </script>
-  <script src="scripts/main.js"></script>
+  <script src="{{ url_for('static', filename='scripts/main.js') }}"></script>
 </body>
 </html>

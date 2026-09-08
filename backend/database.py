@@ -2,11 +2,10 @@ import sqlite3
 import os
 
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "todolist.db")
+DB_PATH = os.path.join(os.path.dirname(__file__), "..", "todolist.db")
 
 
 def get_db_connection():
-    """Open a connection with row access by column name (like a dict)."""
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
@@ -14,7 +13,6 @@ def get_db_connection():
 
 
 def init_db():
-    """Create the tasks table if it doesn't exist yet. Safe to call every startup."""
     conn = get_db_connection()
     conn.execute("""
         CREATE TABLE IF NOT EXISTS tasks (
@@ -30,7 +28,6 @@ def init_db():
         )
     """)
 
-    
     existing_cols = {row["name"] for row in conn.execute("PRAGMA table_info(tasks)")}
     if "priority" not in existing_cols:
         conn.execute("ALTER TABLE tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'medium'")

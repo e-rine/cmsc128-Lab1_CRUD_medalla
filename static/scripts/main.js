@@ -18,16 +18,39 @@ document.addEventListener("click", (event) => {
   }
 });
 
-// ---------- Inline edit form ----------
-function toggleEditForm(taskId) {
+// ---------- Shared edit modal ----------
+// One modal, filled in from the clicked row's data-* attributes,
+// instead of every row carrying its own hidden edit form.
+function openEditModal(taskId) {
   closeAllMenus(null);
-  const form = document.getElementById(`edit-form-${taskId}`);
-  form.classList.toggle("open");
+
+  const row = document.getElementById(`task-${taskId}`);
+  if (!row) return;
+
+  const form = document.getElementById("edit-form");
+  form.action = `/edit-task/${taskId}`;
+
+  document.getElementById("edit-title").value = row.dataset.title;
+  document.getElementById("edit-description").value = row.dataset.description;
+  document.getElementById("edit-date").value = row.dataset.deadlineDate;
+  document.getElementById("edit-time").value = row.dataset.deadlineTime;
+  document.getElementById("edit-priority").value = row.dataset.priority;
+  document.getElementById("edit-category").value = row.dataset.category;
+
+  document.getElementById("edit-modal").classList.add("open");
 }
+
+function closeEditModal() {
+  document.getElementById("edit-modal").classList.remove("open");
+}
+
+document.getElementById("edit-modal")?.addEventListener("click", (event) => {
+  if (event.target.id === "edit-modal") closeEditModal();
+});
 
 // ---------- Delete confirmation modal + undo ----------
 const UNDO_WINDOW_MS = 5000;
-let pendingDelete = null; // { taskId, timeoutId, row }
+let pendingDelete = null;
 
 function openDeleteModal(taskId, taskTitle) {
   closeAllMenus(null);
@@ -49,9 +72,8 @@ document.getElementById("delete-modal")?.addEventListener("click", (event) => {
   if (event.target.id === "delete-modal") closeDeleteModal();
 });
 
-// Confirming in the modal doesn't delete right away — it hides the row and
-// starts the undo window. The actual DELETE request only fires once that
-// window runs out without the user hitting "Undo".
+// Starts the undo window. The actual DELETE request only fires once that
+// window expires (see finalizePendingDelete).
 document.getElementById("delete-form")?.addEventListener("submit", (event) => {
   event.preventDefault();
   const taskId = event.target.dataset.taskId;
@@ -63,8 +85,7 @@ function startPendingDelete(taskId) {
   const row = document.getElementById(`task-${taskId}`);
   if (!row) return;
 
-  // Only one undo-able delete at a time — if another one was already
-  // pending, let it finalize immediately before starting the new one.
+  // Only one undo-able delete at a time
   if (pendingDelete) finalizePendingDelete();
 
   row.classList.add("pending-delete");
@@ -83,8 +104,7 @@ function finalizePendingDelete() {
   fetch(`/delete-task/${taskId}`, { method: "POST" })
     .then(() => row.remove())
     .catch(() => {
-      // Request failed (offline, server down, etc.) — bring the task back
-      // instead of leaving it deleted client-side but alive on the server.
+      // Request failed
       row.classList.remove("pending-delete");
     });
 }
@@ -116,8 +136,7 @@ function hideUndoToast() {
   bar.classList.remove("animate");
 }
 
-// If the user closes/refreshes the tab while a delete is still pending,
-// finalize it immediately instead of silently losing the deletion.
+// Finalize deletion even if the page is closed mid-undo-window
 window.addEventListener("beforeunload", () => {
   if (pendingDelete) {
     navigator.sendBeacon(`/delete-task/${pendingDelete.taskId}`);
