@@ -201,7 +201,7 @@
             <div class="form-row stack">
               <div class="field">
                 <label for="title">Task title</label>
-                <input type="text" id="title" name="title" placeholder="e.g. Finish CMSC 128 lab report" required />
+                <input type="text" id="title" name="title" placeholder="Title here..." required />
               </div>
               <div class="field">
                 <label for="description">Description (optional)</label>
@@ -222,14 +222,16 @@
               <div class="field">
                 <label for="priority">Priority</label>
                 <select id="priority" name="priority" required>
+                <option value="" disabled selected>Select Priority</option>
                   <option value="low">Low</option>
-                  <option value="medium" selected>Medium</option>
+                  <option value="medium">Medium</option>
                   <option value="high">High</option>
                 </select>
               </div>
               <div class="field">
                 <label for="category">Category</label>
                 <select id="category" name="category" required>
+                <option value="" disabled selected>Select Category</option>
                   <option value="school">School</option>
                   <option value="work">Work</option>
                   <option value="personal">Personal</option>

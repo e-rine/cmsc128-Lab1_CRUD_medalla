@@ -148,7 +148,6 @@ h1, h2, h3 {
 }
 
 main {
-  max-width: 960px;
   padding: 28px 32px 48px;
 }
 
@@ -414,6 +413,16 @@ main {
 .category-other {
   background: #f1f0f4;
   color: var(--muted);
+}
+
+#category:invalid,
+#priority:invalid {
+  color: gray;
+}
+
+#category:valid,
+#priority:valid {
+  color: black;
 }
 
 /* Row menu */
