@@ -45,9 +45,117 @@
 
         <div class="page-heading">
           <h1>My Tasks</h1>
-          <p>Add a task below and set exactly when it's due.</p>
+          <p>Add your task below.</p>
         </div>
 
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash-message flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Task list: one boxed table, each task as a row -->
+        <section class="task-table">
+
+          <div class="task-table-header">
+            <span></span>
+            <span>Task</span>
+            <span>Deadline</span>
+            <span>Priority</span>
+            <span>Category</span>
+            <span></span>
+          </div>
+
+          {% for task in tasks %}
+          <article class="task-row{% if task['is_completed'] %} is-completed{% endif %}" id="task-{{ task['id'] }}">
+            <form action="/toggle-task/{{ task['id'] }}" method="POST">
+              <input type="checkbox" class="task-check" {% if task['is_completed'] %}checked{% endif %} onchange="this.form.submit()" />
+            </form>
+
+            <div class="task-body">
+              <div class="task-title">{{ task['title'] }}</div>
+              {% if task['description'] %}
+              <div class="task-description">{{ task['description'] }}</div>
+              {% endif %}
+            </div>
+
+            <div class="col-deadline">
+              <span class="deadline-text{% if task|is_overdue %} overdue{% endif %}">{{ task|format_deadline }}</span>
+            </div>
+
+            <div class="col-status">
+              <span class="priority-pill priority-{{ task['priority'] }}">{{ task['priority']|capitalize }}</span>
+            </div>
+
+            <div class="col-category">
+              <span class="category-pill category-{{ task['category'] }}">{{ task['category']|capitalize }}</span>
+            </div>
+
+            <div class="task-menu">
+              <button type="button" class="menu-trigger" onclick="toggleMenu({{ task['id'] }})">&#8942;</button>
+              <div class="menu-dropdown" id="menu-{{ task['id'] }}">
+                <button type="button" onclick="toggleEditForm({{ task['id'] }})">Edit</button>
+                <button type="button" class="danger-option" onclick="openDeleteModal({{ task['id'] }}, '{{ task['title']|replace("'", "\\'") }}')">Delete</button>
+              </div>
+            </div>
+
+            <!-- Inline edit form -->
+            <form class="edit-form" id="edit-form-{{ task['id'] }}" action="/edit-task/{{ task['id'] }}" method="POST">
+              <div class="form-row stack">
+                <div class="field">
+                  <label for="title-{{ task['id'] }}">Task title</label>
+                  <input type="text" id="title-{{ task['id'] }}" name="title" value="{{ task['title'] }}" required />
+                </div>
+                <div class="field">
+                  <label for="description-{{ task['id'] }}">Description</label>
+                  <textarea id="description-{{ task['id'] }}" name="description">{{ task['description'] or '' }}</textarea>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="field">
+                  <label for="date-{{ task['id'] }}">Deadline date</label>
+                  <input type="date" id="date-{{ task['id'] }}" name="deadline_date" value="{{ task['deadline_date'] }}" required />
+                </div>
+                <div class="field">
+                  <label for="time-{{ task['id'] }}">Deadline time</label>
+                  <input type="time" id="time-{{ task['id'] }}" name="deadline_time" value="{{ task['deadline_time'] }}" required />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="field">
+                  <label for="priority-{{ task['id'] }}">Priority</label>
+                  <select id="priority-{{ task['id'] }}" name="priority" required>
+                    <option value="low" {% if task['priority']=='low' %}selected{% endif %}>Low</option>
+                    <option value="medium" {% if task['priority']=='medium' %}selected{% endif %}>Medium</option>
+                    <option value="high" {% if task['priority']=='high' %}selected{% endif %}>High</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="category-{{ task['id'] }}">Category</label>
+                  <select id="category-{{ task['id'] }}" name="category" required>
+                    <option value="school" {% if task['category']=='school' %}selected{% endif %}>School</option>
+                    <option value="work" {% if task['category']=='work' %}selected{% endif %}>Work</option>
+                    <option value="personal" {% if task['category']=='personal' %}selected{% endif %}>Personal</option>
+                    <option value="finance" {% if task['category']=='finance' %}selected{% endif %}>Finance</option>
+                    <option value="other" {% if task['category']=='other' %}selected{% endif %}>Other</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save changes</button>
+                <button type="button" class="btn btn-ghost" onclick="toggleEditForm({{ task['id'] }})">Cancel</button>
+              </div>
+            </form>
+          </article>
+          {% else %}
+          <div class="empty-state">No tasks yet — add your first one above.</div>
+          {% endfor %}
+
+        </section>
+
+        
         <!-- Add task -->
         <section class="add-task-card">
           <h2>Add a task</h2>
@@ -55,7 +163,7 @@
             <div class="form-row stack">
               <div class="field">
                 <label for="title">Task title</label>
-                <input type="text" id="title" name="title" placeholder="e.g. Finish CMSC 128 lab report" required />
+                <input type="text" id="title" name="title" placeholder="e.g. CMSC 128 Stuff" required />
               </div>
               <div class="field">
                 <label for="description">Description (optional)</label>
@@ -76,14 +184,16 @@
               <div class="field">
                 <label for="priority">Priority</label>
                 <select id="priority" name="priority" required>
-                  <option value="low">Low</option>
-                  <option value="medium" selected>Medium</option>
-                  <option value="high">High</option>
+                <option value="" disabled selected> -- Select Priority -- </option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
                 </select>
               </div>
               <div class="field">
                 <label for="category">Category</label>
                 <select id="category" name="category" required>
+                  <option value="" disabled selected> -- Select Category -- </option>
                   <option value="school">School</option>
                   <option value="work">Work</option>
                   <option value="personal">Personal</option>
@@ -94,263 +204,6 @@
             </div>
             <button type="submit" class="btn btn-primary">Add task</button>
           </form>
-        </section>
-
-        <!-- Task list: one boxed table, each task as a row -->
-        <section class="task-table">
-
-          <div class="task-table-header">
-            <span></span>
-            <span>Task</span>
-            <span>Deadline</span>
-            <span>Priority</span>
-            <span>Category</span>
-            <span></span>
-          </div>
-
-          <!-- Task 1: not completed, not overdue -->
-          <article class="task-row" id="task-1">
-            <form action="/toggle-task/1" method="POST">
-              <input type="checkbox" class="task-check" onchange="this.form.submit()" />
-            </form>
-
-            <div class="task-body">
-              <div class="task-title">Finish CMSC 128 lab report</div>
-              <div class="task-description">Write up results section and submit to Canvas.</div>
-            </div>
-
-            <div class="col-deadline">
-              <span class="deadline-text">Sep 12, 2026 · 11:59 PM</span>
-            </div>
-
-            <div class="col-status">
-              <span class="priority-pill priority-medium">Medium</span>
-            </div>
-
-            <div class="col-category">
-              <span class="category-pill category-school">School</span>
-            </div>
-
-            <div class="task-menu">
-              <button type="button" class="menu-trigger" onclick="toggleMenu(1)">&#8942;</button>
-              <div class="menu-dropdown" id="menu-1">
-                <button type="button" onclick="toggleEditForm(1)">Edit</button>
-                <button type="button" class="danger-option" onclick="openDeleteModal(1, 'Finish CMSC 128 lab report')">Delete</button>
-              </div>
-            </div>
-
-            <!-- Inline edit form -->
-            <form class="edit-form" id="edit-form-1" action="/edit-task/1" method="POST">
-              <div class="form-row stack">
-                <div class="field">
-                  <label for="title-1">Task title</label>
-                  <input type="text" id="title-1" name="title" value="Finish CMSC 128 lab report" required />
-                </div>
-                <div class="field">
-                  <label for="description-1">Description</label>
-                  <textarea id="description-1" name="description">Write up results section and submit to Canvas.</textarea>
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="field">
-                  <label for="date-1">Deadline date</label>
-                  <input type="date" id="date-1" name="deadline_date" value="2026-09-12" required />
-                </div>
-                <div class="field">
-                  <label for="time-1">Deadline time</label>
-                  <input type="time" id="time-1" name="deadline_time" value="23:59" required />
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="field">
-                  <label for="priority-1">Priority</label>
-                  <select id="priority-1" name="priority" required>
-                    <option value="low">Low</option>
-                    <option value="medium" selected>Medium</option>
-                    <option value="high">High</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label for="category-1">Category</label>
-                  <select id="category-1" name="category" required>
-                    <option value="school" selected>School</option>
-                    <option value="work">Work</option>
-                    <option value="personal">Personal</option>
-                    <option value="finance">Finance</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-              </div>
-              <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Save changes</button>
-                <button type="button" class="btn btn-ghost" onclick="toggleEditForm(1)">Cancel</button>
-              </div>
-            </form>
-          </article>
-
-          <!-- Task 2: overdue -->
-          <article class="task-row" id="task-2">
-            <form action="/toggle-task/2" method="POST">
-              <input type="checkbox" class="task-check" onchange="this.form.submit()" />
-            </form>
-
-            <div class="task-body">
-              <div class="task-title">Pay internet bill</div>
-            </div>
-
-            <div class="col-deadline">
-              <span class="deadline-text overdue">Sep 5, 2026 · 6:00 PM</span>
-            </div>
-
-            <div class="col-status">
-              <span class="priority-pill priority-high">High</span>
-            </div>
-
-            <div class="col-category">
-              <span class="category-pill category-finance">Finance</span>
-            </div>
-
-            <div class="task-menu">
-              <button type="button" class="menu-trigger" onclick="toggleMenu(2)">&#8942;</button>
-              <div class="menu-dropdown" id="menu-2">
-                <button type="button" onclick="toggleEditForm(2)">Edit</button>
-                <button type="button" class="danger-option" onclick="openDeleteModal(2, 'Pay internet bill')">Delete</button>
-              </div>
-            </div>
-
-            <!-- Inline edit form -->
-            <form class="edit-form" id="edit-form-2" action="/edit-task/2" method="POST">
-              <div class="form-row stack">
-                <div class="field">
-                  <label for="title-2">Task title</label>
-                  <input type="text" id="title-2" name="title" value="Pay internet bill" required />
-                </div>
-                <div class="field">
-                  <label for="description-2">Description</label>
-                  <textarea id="description-2" name="description"></textarea>
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="field">
-                  <label for="date-2">Deadline date</label>
-                  <input type="date" id="date-2" name="deadline_date" value="2026-09-05" required />
-                </div>
-                <div class="field">
-                  <label for="time-2">Deadline time</label>
-                  <input type="time" id="time-2" name="deadline_time" value="18:00" required />
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="field">
-                  <label for="priority-2">Priority</label>
-                  <select id="priority-2" name="priority" required>
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high" selected>High</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label for="category-2">Category</label>
-                  <select id="category-2" name="category" required>
-                    <option value="school">School</option>
-                    <option value="work">Work</option>
-                    <option value="personal">Personal</option>
-                    <option value="finance" selected>Finance</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-              </div>
-              <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Save changes</button>
-                <button type="button" class="btn btn-ghost" onclick="toggleEditForm(2)">Cancel</button>
-              </div>
-            </form>
-          </article>
-
-          <!-- Task 3: completed -->
-          <article class="task-row is-completed" id="task-3">
-            <form action="/toggle-task/3" method="POST">
-              <input type="checkbox" class="task-check" checked onchange="this.form.submit()" />
-            </form>
-
-            <div class="task-body">
-              <div class="task-title">Buy groceries</div>
-              <div class="task-description">Milk, eggs, bread, coffee.</div>
-            </div>
-
-            <div class="col-deadline">
-              <span class="deadline-text">Sep 7, 2026 · 9:00 AM</span>
-            </div>
-
-            <div class="col-status">
-              <span class="priority-pill priority-low">Low</span>
-            </div>
-
-            <div class="col-category">
-              <span class="category-pill category-personal">Personal</span>
-            </div>
-
-            <div class="task-menu">
-              <button type="button" class="menu-trigger" onclick="toggleMenu(3)">&#8942;</button>
-              <div class="menu-dropdown" id="menu-3">
-                <button type="button" onclick="toggleEditForm(3)">Edit</button>
-                <button type="button" class="danger-option" onclick="openDeleteModal(3, 'Buy groceries')">Delete</button>
-              </div>
-            </div>
-
-            <!-- Inline edit form -->
-            <form class="edit-form" id="edit-form-3" action="/edit-task/3" method="POST">
-              <div class="form-row stack">
-                <div class="field">
-                  <label for="title-3">Task title</label>
-                  <input type="text" id="title-3" name="title" value="Buy groceries" required />
-                </div>
-                <div class="field">
-                  <label for="description-3">Description</label>
-                  <textarea id="description-3" name="description">Milk, eggs, bread, coffee.</textarea>
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="field">
-                  <label for="date-3">Deadline date</label>
-                  <input type="date" id="date-3" name="deadline_date" value="2026-09-07" required />
-                </div>
-                <div class="field">
-                  <label for="time-3">Deadline time</label>
-                  <input type="time" id="time-3" name="deadline_time" value="09:00" required />
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="field">
-                  <label for="priority-3">Priority</label>
-                  <select id="priority-3" name="priority" required>
-                    <option value="low" selected>Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label for="category-3">Category</label>
-                  <select id="category-3" name="category" required>
-                    <option value="school">School</option>
-                    <option value="work">Work</option>
-                    <option value="personal" selected>Personal</option>
-                    <option value="finance">Finance</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-              </div>
-              <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Save changes</button>
-                <button type="button" class="btn btn-ghost" onclick="toggleEditForm(3)">Cancel</button>
-              </div>
-            </form>
-          </article>
-
-          <!-- Uncomment when there are zero tasks:
-          <div class="empty-state">No tasks yet — add your first one above.</div>
-          -->
-
         </section>
 
       </main>
