@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-# Database lives next to this file so the path works no matter where app.py is run from
+
 DB_PATH = os.path.join(os.path.dirname(__file__), "todolist.db")
 
 

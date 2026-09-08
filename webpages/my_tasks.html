@@ -6,7 +6,7 @@
   <title>My Tasks · To-Do List</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles/my_tasks.css" />
+  <link rel="stylesheet" href="/styles/my_tasks.css"/>
 </head>
 <body>
 
@@ -94,7 +94,7 @@
           </form>
         </section>
 
-        <!-- Task list: one boxed table, each task as a row -->
+        <!-- Task list -->
         <section class="task-table">
 
           <div class="task-table-header">
@@ -139,7 +139,7 @@
               </div>
             </div>
 
-            <!-- Inline edit form -->
+            <!-- Edit form -->
             <form class="edit-form" id="edit-form-{{ task['id'] }}" action="/edit-task/{{ task['id'] }}" method="POST">
               <div class="form-row stack">
                 <div class="field">
@@ -205,7 +205,7 @@
               </div>
               <div class="field">
                 <label for="description">Description (optional)</label>
-                <textarea id="description" name="description" placeholder="Any extra details..."></textarea>
+                <textarea id="description" name="description" placeholder="Details here..."></textarea>
               </div>
             </div>
             <div class="form-row">
@@ -251,7 +251,7 @@
   
 
 
-  <!-- Delete confirmation modal (shared, filled in by JS) -->
+  <!-- Delete confirmation modal -->
   <div class="modal-overlay" id="delete-modal">
     <div class="modal-box">
       <h3>Delete this task?</h3>
