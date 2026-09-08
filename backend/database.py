@@ -30,6 +30,7 @@ def init_db():
         )
     """)
 
+    
     existing_cols = {row["name"] for row in conn.execute("PRAGMA table_info(tasks)")}
     if "priority" not in existing_cols:
         conn.execute("ALTER TABLE tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'medium'")
@@ -42,11 +43,32 @@ def init_db():
 
 # ---------- CRUD ----------
 
-def get_all_tasks():
+SORT_COLUMNS = {
+    "date_added": "created_at DESC",
+    "due_date": "deadline_date ASC, deadline_time ASC",
+    "priority": "CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 4 END ASC, deadline_date ASC",
+    "tag": "category ASC, deadline_date ASC",
+}
+
+
+def get_all_tasks(sort_by="due_date", tag=None, priority=None):
     conn = get_db_connection()
-    tasks = conn.execute(
-        "SELECT * FROM tasks ORDER BY deadline_date ASC, deadline_time ASC"
-    ).fetchall()
+
+    query = "SELECT * FROM tasks WHERE 1=1"
+    params = []
+
+    if tag:
+        query += " AND category = ?"
+        params.append(tag)
+
+    if priority:
+        query += " AND priority = ?"
+        params.append(priority)
+
+    order_clause = SORT_COLUMNS.get(sort_by, SORT_COLUMNS["due_date"])
+    query += f" ORDER BY {order_clause}"
+
+    tasks = conn.execute(query, params).fetchall()
     conn.close()
     return tasks
 

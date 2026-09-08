@@ -45,7 +45,7 @@
 
         <div class="page-heading">
           <h1>My Tasks</h1>
-          <p>Add your task below.</p>
+          <p>Add a task below and set exactly when it's due.</p>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -55,6 +55,44 @@
             {% endfor %}
           {% endif %}
         {% endwith %}
+
+        <!-- Filter & sort bar -->
+        <section class="filter-bar">
+          <form method="GET" action="/my-tasks" class="filter-bar-form" id="filter-form">
+            <div class="field">
+              <label for="sort">Sort by</label>
+              <select id="sort" name="sort" onchange="document.getElementById('filter-form').submit()">
+                <option value="due_date" {% if sort_by=='due_date' %}selected{% endif %}>Due date</option>
+                <option value="date_added" {% if sort_by=='date_added' %}selected{% endif %}>Date added</option>
+                <option value="priority" {% if sort_by=='priority' %}selected{% endif %}>Priority</option>
+                <option value="tag" {% if sort_by=='tag' %}selected{% endif %}>Tag</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="filter-priority">Priority</label>
+              <select id="filter-priority" name="priority" onchange="document.getElementById('filter-form').submit()">
+                <option value="" {% if not selected_priority %}selected{% endif %}>All</option>
+                <option value="low" {% if selected_priority=='low' %}selected{% endif %}>Low</option>
+                <option value="medium" {% if selected_priority=='medium' %}selected{% endif %}>Medium</option>
+                <option value="high" {% if selected_priority=='high' %}selected{% endif %}>High</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="filter-tag">Tag</label>
+              <select id="filter-tag" name="tag" onchange="document.getElementById('filter-form').submit()">
+                <option value="" {% if not selected_tag %}selected{% endif %}>All</option>
+                <option value="school" {% if selected_tag=='school' %}selected{% endif %}>School</option>
+                <option value="work" {% if selected_tag=='work' %}selected{% endif %}>Work</option>
+                <option value="personal" {% if selected_tag=='personal' %}selected{% endif %}>Personal</option>
+                <option value="finance" {% if selected_tag=='finance' %}selected{% endif %}>Finance</option>
+                <option value="other" {% if selected_tag=='other' %}selected{% endif %}>Other</option>
+              </select>
+            </div>
+            {% if selected_tag or selected_priority or sort_by != 'due_date' %}
+            <a href="/my-tasks" class="btn btn-ghost filter-clear">Clear filters</a>
+            {% endif %}
+          </form>
+        </section>
 
         <!-- Task list: one boxed table, each task as a row -->
         <section class="task-table">
@@ -150,7 +188,7 @@
             </form>
           </article>
           {% else %}
-          <div class="empty-state">No tasks yet — add your first one above.</div>
+          <div class="empty-state">No tasks yet.</div>
           {% endfor %}
 
         </section>
@@ -163,7 +201,7 @@
             <div class="form-row stack">
               <div class="field">
                 <label for="title">Task title</label>
-                <input type="text" id="title" name="title" placeholder="e.g. CMSC 128 Stuff" required />
+                <input type="text" id="title" name="title" placeholder="e.g. Finish CMSC 128 lab report" required />
               </div>
               <div class="field">
                 <label for="description">Description (optional)</label>
@@ -184,16 +222,14 @@
               <div class="field">
                 <label for="priority">Priority</label>
                 <select id="priority" name="priority" required>
-                <option value="" disabled selected> -- Select Priority -- </option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
+                  <option value="low">Low</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="high">High</option>
                 </select>
               </div>
               <div class="field">
                 <label for="category">Category</label>
                 <select id="category" name="category" required>
-                  <option value="" disabled selected> -- Select Category -- </option>
                   <option value="school">School</option>
                   <option value="work">Work</option>
                   <option value="personal">Personal</option>
@@ -210,6 +246,9 @@
     </div>
   </div>
 
+  
+
+
   <!-- Delete confirmation modal (shared, filled in by JS) -->
   <div class="modal-overlay" id="delete-modal">
     <div class="modal-box">
@@ -222,6 +261,13 @@
         </div>
       </form>
     </div>
+  </div>
+
+  <!-- Undo toast, shown after a delete is confirmed -->
+  <div class="toast-undo" id="undo-toast">
+    <span id="undo-toast-text">Task deleted.</span>
+    <button type="button" class="toast-undo-btn" onclick="undoDelete()">Undo</button>
+    <div class="toast-undo-bar" id="undo-toast-bar"></div>
   </div>
 
   <script>
