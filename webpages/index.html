@@ -6,22 +6,56 @@
   <title>To-Do List</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles/my_tasks.css" />
+  <link rel="stylesheet" href="styles/my_tasks.css" />
 </head>
 <body>
 
-  <nav class="navbar">
-    <div class="brand">To<span>Do</span>List</div>
-    <ul class="nav-links">
-      <li><a href="/">Homepage</a></li>
-      <li><a href="/my_tasks.html">My Tasks</a></li>
-    </ul>
-  </nav>
+  <div class="app-shell">
 
-  <section class="hero">
-    <h1>Lorem ipsum dolor sit amet consectetur adipiscing elit.</h1>
-    <p>Lorem ipsum dolor sit amet consectetur adipiscing elit.</p>
-  </section>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">TD</span>
+        To<span>Do</span>List
+      </div>
 
+      <nav class="sidebar-nav">
+        <a href="/" class="active">
+          <span>Homepage</span>
+        </a>
+        <a href="/my-tasks">
+          <span>My Tasks</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-foot">Stay on top of your deadlines, one task at a time.</div>
+    </aside>
+
+    <!-- Content -->
+    <div class="content">
+
+      <div class="topbar">
+        <div class="topbar-search">
+          Search tasks...
+        </div>
+        <div class="topbar-date" id="topbar-date"></div>
+      </div>
+
+      <main>
+        <section class="hero">
+          <h1>Lorem ipsum dolor sit amet consectetur adipiscing elit.</h1>
+          <p>Lorem ipsum dolor sit amet consectetur adipiscing elit.</p>
+          <a href="/my-tasks" class="btn btn-primary" style="display:inline-block; text-decoration:none;">Go to My Tasks</a>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    var topbarDate = document.getElementById('topbar-date');
+    if (topbarDate) {
+      topbarDate.textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+    }
+  </script>
 </body>
 </html>
