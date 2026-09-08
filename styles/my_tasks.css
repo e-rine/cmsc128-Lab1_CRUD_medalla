@@ -284,7 +284,6 @@ main {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  overflow: hidden;
   margin-bottom: 30px;
   box-shadow: 0 6px 20px rgba(108, 76, 241, 0.06);
 }
@@ -303,6 +302,8 @@ main {
   font-weight: 600;
   color: var(--muted);
   background: var(--bg);
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
 }
 
 .task-row {
@@ -312,6 +313,8 @@ main {
 
 .task-row:last-of-type {
   border-bottom: none;
+  border-bottom-left-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
 }
 
 .task-check {
