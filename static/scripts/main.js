@@ -7,8 +7,23 @@ function closeAllMenus(exceptId) {
 
 function toggleMenu(taskId) {
   const menu = document.getElementById(`menu-${taskId}`);
-  closeAllMenus(taskId);
-  menu.classList.toggle("open");
+  const wasOpen = menu.classList.contains("open");
+  closeAllMenus(null);
+  if (wasOpen) return;
+
+  const trigger = document.querySelector(`#task-${taskId} .menu-trigger`);
+  const rect = trigger.getBoundingClientRect();
+  const menuHeight = 90; // approx height of the 2-item dropdown
+
+  // Open above the button instead of below if there isn't room underneath
+  const openUpward = window.innerHeight - rect.bottom < menuHeight;
+
+  menu.style.left = `${rect.right - 120}px`; // right-align to the trigger (min-width: 120px)
+  menu.style.top = openUpward
+    ? `${rect.top - menuHeight}px`
+    : `${rect.bottom + 4}px`;
+
+  menu.classList.add("open");
 }
 
 // Close dropdown when clicking anywhere outside it
@@ -18,35 +33,12 @@ document.addEventListener("click", (event) => {
   }
 });
 
-// ---------- Shared edit modal ----------
-// One modal, filled in from the clicked row's data-* attributes,
-// instead of every row carrying its own hidden edit form.
-function openEditModal(taskId) {
+// ---------- Inline edit form ----------
+function toggleEditForm(taskId) {
   closeAllMenus(null);
-
-  const row = document.getElementById(`task-${taskId}`);
-  if (!row) return;
-
-  const form = document.getElementById("edit-form");
-  form.action = `/edit-task/${taskId}`;
-
-  document.getElementById("edit-title").value = row.dataset.title;
-  document.getElementById("edit-description").value = row.dataset.description;
-  document.getElementById("edit-date").value = row.dataset.deadlineDate;
-  document.getElementById("edit-time").value = row.dataset.deadlineTime;
-  document.getElementById("edit-priority").value = row.dataset.priority;
-  document.getElementById("edit-category").value = row.dataset.category;
-
-  document.getElementById("edit-modal").classList.add("open");
+  const form = document.getElementById(`edit-form-${taskId}`);
+  form.classList.toggle("open");
 }
-
-function closeEditModal() {
-  document.getElementById("edit-modal").classList.remove("open");
-}
-
-document.getElementById("edit-modal")?.addEventListener("click", (event) => {
-  if (event.target.id === "edit-modal") closeEditModal();
-});
 
 // ---------- Delete confirmation modal + undo ----------
 const UNDO_WINDOW_MS = 5000;
@@ -72,8 +64,7 @@ document.getElementById("delete-modal")?.addEventListener("click", (event) => {
   if (event.target.id === "delete-modal") closeDeleteModal();
 });
 
-// Starts the undo window. The actual DELETE request only fires once that
-// window expires (see finalizePendingDelete).
+// Starts the undo window
 document.getElementById("delete-form")?.addEventListener("submit", (event) => {
   event.preventDefault();
   const taskId = event.target.dataset.taskId;
