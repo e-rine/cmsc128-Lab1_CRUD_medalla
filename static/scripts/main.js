@@ -7,15 +7,16 @@ function closeAllMenus(exceptId) {
 
 function toggleMenu(taskId) {
   const menu = document.getElementById(`menu-${taskId}`);
-  const wasOpen = menu.classList.contains("open");
-  closeAllMenus(null);
-  if (wasOpen) return;
-
-  const trigger = document.querySelector(`#task-${taskId} .menu-trigger`);
-  const rect = trigger.getBoundingClientRect();
-  const menuHeight = 90; 
-  menu.classList.add("open");
+  closeAllMenus(taskId);
+  menu.classList.toggle("open");
 }
+
+// Close dropdown when clicking anywhere outside it
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".task-menu")) {
+    closeAllMenus(null);
+  }
+});
 
 // ---------- Inline edit form ----------
 function toggleEditForm(taskId) {
@@ -24,9 +25,10 @@ function toggleEditForm(taskId) {
   form.classList.toggle("open");
 }
 
-// ---------- Delete confirmation modal ----------
+// ---------- Delete confirmation modal + undo ----------
 const UNDO_WINDOW_MS = 5000;
-let pendingDelete = null;
+let pendingDeletes = {};        // taskId -> { timeoutId, row }
+let currentToastTaskId = null;  // which task the visible toast's Undo button applies to
 
 function openDeleteModal(taskId, taskTitle) {
   closeAllMenus(null);
@@ -43,7 +45,12 @@ function closeDeleteModal() {
   document.getElementById("delete-modal").classList.remove("open");
 }
 
-// Starts the undo window
+// closes if anywhere is clicked
+document.getElementById("delete-modal")?.addEventListener("click", (event) => {
+  if (event.target.id === "delete-modal") closeDeleteModal();
+});
+
+// what happens when u delete
 document.getElementById("delete-form")?.addEventListener("submit", (event) => {
   event.preventDefault();
   const taskId = event.target.dataset.taskId;
@@ -51,43 +58,51 @@ document.getElementById("delete-form")?.addEventListener("submit", (event) => {
   if (taskId) startPendingDelete(taskId);
 });
 
+// starts the undo timer
 function startPendingDelete(taskId) {
   const row = document.getElementById(`task-${taskId}`);
   if (!row) return;
 
-  // Only one undo-able delete at a time
-  if (pendingDelete) finalizePendingDelete();
+  if (pendingDeletes[taskId]) {
+    clearTimeout(pendingDeletes[taskId].timeoutId);
+  }
 
   row.classList.add("pending-delete");
-  showUndoToast();
+  showUndoToast(taskId);
 
-  const timeoutId = setTimeout(finalizePendingDelete, UNDO_WINDOW_MS);
-  pendingDelete = { taskId, timeoutId, row };
+  const timeoutId = setTimeout(() => finalizePendingDelete(taskId), UNDO_WINDOW_MS);
+  pendingDeletes[taskId] = { timeoutId, row };
 }
 
-function finalizePendingDelete() {
-  if (!pendingDelete) return;
-  const { taskId, row } = pendingDelete;
-  pendingDelete = null;
-  hideUndoToast();
+// actually deletes from the database
+function finalizePendingDelete(taskId) {
+  const pending = pendingDeletes[taskId];
+  if (!pending) return;
+  delete pendingDeletes[taskId];
+
+  if (currentToastTaskId === taskId) hideUndoToast();
 
   fetch(`/delete-task/${taskId}`, { method: "POST" })
-    .then(() => row.remove())
+    .then(() => pending.row.remove())
     .catch(() => {
-      // Request failed
-      row.classList.remove("pending-delete");
+      pending.row.classList.remove("pending-delete");
     });
 }
 
+// when u click undo, cancels the timer and returns visible
 function undoDelete() {
-  if (!pendingDelete) return;
-  clearTimeout(pendingDelete.timeoutId);
-  pendingDelete.row.classList.remove("pending-delete");
-  pendingDelete = null;
+  const taskId = currentToastTaskId;
+  if (taskId == null || !pendingDeletes[taskId]) return;
+
+  clearTimeout(pendingDeletes[taskId].timeoutId);
+  pendingDeletes[taskId].row.classList.remove("pending-delete");
+  delete pendingDeletes[taskId];
   hideUndoToast();
 }
 
-function showUndoToast() {
+// help function to show the undo banner
+function showUndoToast(taskId) {
+  currentToastTaskId = taskId;
   const toast = document.getElementById("undo-toast");
   const bar = document.getElementById("undo-toast-bar");
 
@@ -95,20 +110,22 @@ function showUndoToast() {
 
   // Restart the progress-bar animation every time a new delete is pending
   bar.classList.remove("animate");
-  void bar.offsetWidth; // force reflow so the class removal registers
+  void bar.offsetWidth; 
   bar.classList.add("animate");
 }
 
+// hides the previous undo banner when another one is beingdeleted
 function hideUndoToast() {
+  currentToastTaskId = null;
   const toast = document.getElementById("undo-toast");
   const bar = document.getElementById("undo-toast-bar");
   toast.classList.remove("open");
   bar.classList.remove("animate");
 }
 
-// Finalize deletion even if the page is closed mid-undo-window
+// auto delete if u refresh or exit
 window.addEventListener("beforeunload", () => {
-  if (pendingDelete) {
-    navigator.sendBeacon(`/delete-task/${pendingDelete.taskId}`);
-  }
+  Object.keys(pendingDeletes).forEach((taskId) => {
+    navigator.sendBeacon(`/delete-task/${taskId}`);
+  });
 });
