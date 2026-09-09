@@ -8,7 +8,6 @@ DB_PATH = os.path.join(os.path.dirname(__file__), "..", "todolist.db")
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
 
@@ -21,37 +20,22 @@ def init_db():
             description TEXT,
             deadline_date TEXT NOT NULL,
             deadline_time TEXT NOT NULL,
-            priority TEXT NOT NULL DEFAULT 'medium',
-            category TEXT NOT NULL DEFAULT 'other',
+            priority TEXT NOT NULL,
+            category TEXT NOT NULL,
             is_completed INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
         )
     """)
-
-    existing_cols = {row["name"] for row in conn.execute("PRAGMA table_info(tasks)")}
-    if "priority" not in existing_cols:
-        conn.execute("ALTER TABLE tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'medium'")
-    if "category" not in existing_cols:
-        conn.execute("ALTER TABLE tasks ADD COLUMN category TEXT NOT NULL DEFAULT 'other'")
-
     conn.commit()
     conn.close()
 
 
 # ---------- CRUD ----------
 
-SORT_COLUMNS = {
-    "date_added": "created_at DESC",
-    "due_date": "deadline_date ASC, deadline_time ASC",
-    "priority": "CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 4 END ASC, deadline_date ASC",
-    "tag": "category ASC, deadline_date ASC",
-}
-
-
-def get_all_tasks(sort_by="due_date", tag=None, priority=None):
+def get_all_tasks(sort_by="Due_date", tag=None, priority=None):
     conn = get_db_connection()
 
-    query = "SELECT * FROM tasks WHERE 1=1"
+    query = "SELECT * FROM tasks where 1=1"
     params = []
 
     if tag:
@@ -62,7 +46,16 @@ def get_all_tasks(sort_by="due_date", tag=None, priority=None):
         query += " AND priority = ?"
         params.append(priority)
 
-    order_clause = SORT_COLUMNS.get(sort_by, SORT_COLUMNS["due_date"])
+    # Figure out how to sort the results based on what was picked in the dropdown
+    if sort_by == "date_added":
+        order_clause = "created_at DESC"
+    elif sort_by == "priority":
+        order_clause = "CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 4 END ASC, deadline_date ASC"
+    elif sort_by == "tag":
+        order_clause = "category ASC, deadline_date ASC"
+    else:
+        order_clause = "deadline_date ASC, deadline_time ASC"
+
     query += f" ORDER BY {order_clause}"
 
     tasks = conn.execute(query, params).fetchall()

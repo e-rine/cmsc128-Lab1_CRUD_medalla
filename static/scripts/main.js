@@ -13,25 +13,9 @@ function toggleMenu(taskId) {
 
   const trigger = document.querySelector(`#task-${taskId} .menu-trigger`);
   const rect = trigger.getBoundingClientRect();
-  const menuHeight = 90; // approx height of the 2-item dropdown
-
-  // Open above the button instead of below if there isn't room underneath
-  const openUpward = window.innerHeight - rect.bottom < menuHeight;
-
-  menu.style.left = `${rect.right - 120}px`; // right-align to the trigger (min-width: 120px)
-  menu.style.top = openUpward
-    ? `${rect.top - menuHeight}px`
-    : `${rect.bottom + 4}px`;
-
+  const menuHeight = 90; 
   menu.classList.add("open");
 }
-
-// Close dropdown when clicking anywhere outside it
-document.addEventListener("click", (event) => {
-  if (!event.target.closest(".task-menu")) {
-    closeAllMenus(null);
-  }
-});
 
 // ---------- Inline edit form ----------
 function toggleEditForm(taskId) {
@@ -40,7 +24,7 @@ function toggleEditForm(taskId) {
   form.classList.toggle("open");
 }
 
-// ---------- Delete confirmation modal + undo ----------
+// ---------- Delete confirmation modal ----------
 const UNDO_WINDOW_MS = 5000;
 let pendingDelete = null;
 
@@ -58,11 +42,6 @@ function openDeleteModal(taskId, taskTitle) {
 function closeDeleteModal() {
   document.getElementById("delete-modal").classList.remove("open");
 }
-
-// Close modal if the overlay itself (not the box) is clicked
-document.getElementById("delete-modal")?.addEventListener("click", (event) => {
-  if (event.target.id === "delete-modal") closeDeleteModal();
-});
 
 // Starts the undo window
 document.getElementById("delete-form")?.addEventListener("submit", (event) => {

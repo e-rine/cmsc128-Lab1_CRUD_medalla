@@ -36,8 +36,6 @@ def is_overdue(task):
 # ---------- Helper ----------
 
 def redirect_back():
-    """Redirect to the page the form was submitted from (keeps ?sort=&tag=&priority=
-    intact), falling back to the plain my-tasks page if there's no referrer."""
     return redirect(request.referrer or url_for("my_tasks"))
 
 
