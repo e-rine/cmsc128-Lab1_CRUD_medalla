@@ -27,7 +27,7 @@ function toggleEditForm(taskId) {
 
 // ---------- Delete confirmation modal + undo ----------
 const UNDO_WINDOW_MS = 5000;
-let pendingDeletes = {};        // taskId -> { timeoutId, row }
+let pendingDeletes = {};        
 let currentToastTaskId = null;  // which task the visible toast's Undo button applies to
 
 function openDeleteModal(taskId, taskTitle) {
