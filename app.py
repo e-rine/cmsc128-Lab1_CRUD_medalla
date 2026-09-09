@@ -102,14 +102,13 @@ def edit_task(task_id):
     return redirect_back()
 
 
-@app.route("/delete-task/<int:task_id>", methods=["POST"])
+@app.route("/delete-task/<int:task_id>", methods=["DELETE"])
 def delete_task_route(task_id):
     if get_task_by_id(task_id) is None:
         flash("That task no longer exists.", "error")
         return redirect_back()
 
     delete_task(task_id)
-    flash("Task deleted successfully.", "success")
     return redirect_back()
 
 

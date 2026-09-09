@@ -76,7 +76,7 @@
               </select>
             </div>
             <div class="field">
-              <label for="filter-tag">Tag</label>
+              <label for="filter-tag">Category</label>
               <select id="filter-tag" name="tag" onchange="document.getElementById('filter-form').submit()">
                 <option value="" {% if not selected_tag %}selected{% endif %}>All</option>
                 <option value="school" {% if selected_tag=='school' %}selected{% endif %}>School</option>

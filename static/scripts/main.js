@@ -28,7 +28,7 @@ function toggleEditForm(taskId) {
 // ---------- Delete confirmation modal + undo ----------
 const UNDO_WINDOW_MS = 5000;
 let pendingDeletes = {};        
-let currentToastTaskId = null;  // which task the visible toast's Undo button applies to
+let currentToastTaskId = null; 
 
 function openDeleteModal(taskId, taskTitle) {
   closeAllMenus(null);
@@ -82,7 +82,7 @@ function finalizePendingDelete(taskId) {
 
   if (currentToastTaskId === taskId) hideUndoToast();
 
-  fetch(`/delete-task/${taskId}`, { method: "POST" })
+  fetch(`/delete-task/${taskId}`, { method: "DELETE" })
     .then(() => pending.row.remove())
     .catch(() => {
       pending.row.classList.remove("pending-delete");

@@ -34,17 +34,19 @@ def init_db():
 
 def get_all_tasks(sort_by="Due_date", tag=None, priority=None):
     conn = get_db_connection()
-
-    query = "SELECT * FROM tasks where 1=1"
+    query = "SELECT * FROM tasks"
+    conditions = []
     params = []
 
     if tag:
-        query += " AND category = ?"
+        conditions.append("category = ?")
         params.append(tag)
-
     if priority:
-        query += " AND priority = ?"
+        conditions.append("priority = ?")
         params.append(priority)
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
 
     # Figure out how to sort the results based on what was picked in the dropdown
     if sort_by == "date_added":
@@ -70,7 +72,7 @@ def get_task_by_id(task_id):
     return task
 
 
-def create_task(title, description, deadline_date, deadline_time, priority="medium", category="other"):
+def create_task(title, description, deadline_date, deadline_time, priority, category):
     conn = get_db_connection()
     conn.execute(
         """INSERT INTO tasks (title, description, deadline_date, deadline_time, priority, category)
@@ -81,7 +83,7 @@ def create_task(title, description, deadline_date, deadline_time, priority="medi
     conn.close()
 
 
-def update_task(task_id, title, description, deadline_date, deadline_time, priority="medium", category="other"):
+def update_task(task_id, title, description, deadline_date, deadline_time, priority, category):
     conn = get_db_connection()
     conn.execute(
         """UPDATE tasks

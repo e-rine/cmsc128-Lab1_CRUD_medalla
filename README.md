@@ -44,5 +44,5 @@ All data operations happen through Flask routes, which read/write to SQLite via 
 | GET | `/my-tasks` | Read | View all tasks |
 | POST | `/add-task` | Create | Add a new task |
 | POST | `/edit-task/<id>` | Update | Edit an existing task |
-| POST | `/delete-task/<id>` | Delete | Remove a task |
 | POST | `/toggle-task/<id>` | Update | Mark a task done / not done |
+| DELETE | `/delete-task/<id>` | Delete | Remove a task |
