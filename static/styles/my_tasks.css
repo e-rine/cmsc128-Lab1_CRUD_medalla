@@ -91,6 +91,55 @@ h1, h2, h3, .brand { font-family: "Sora", sans-serif; }
   line-height: 1.4;
 }
 
+.sidebar-account {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  min-width: 0;
+}
+
+.sidebar-avatar {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(79, 70, 229, 0.1);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.sidebar-username {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-logout {
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.sidebar-logout:hover { background: var(--bg); color: var(--danger); }
+
 /* ---------- Content ---------- */
 .content {
   flex: 1;
@@ -141,7 +190,7 @@ h1, h2, h3, .brand { font-family: "Sora", sans-serif; }
 }
 
 .page-heading-row > .btn {
-  padding: 10px 20px;
+  padding: 14px 28px;
   font-size: 1.05rem;
   margin-top: 24px;
   margin-right: 40px;
@@ -463,6 +512,15 @@ h1, h2, h3, .brand { font-family: "Sora", sans-serif; }
   .app-shell { flex-direction: column; }
   .sidebar { width: 100%; flex-direction: row; align-items: center; }
   .sidebar-foot { display: none; }
+  .sidebar-account {
+    margin-top: 0;
+    margin-left: auto;
+    padding-top: 0;
+    border-top: none;
+    flex-direction: row;
+    align-items: center;
+  }
+  .sidebar-username { display: none; }
   .content { padding: 20px; }
   .task-table-header { display: none; }
   .task-row {

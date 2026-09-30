@@ -16,6 +16,7 @@ def init_db():
     conn.execute("""
         CREATE TABLE IF NOT EXISTS tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
             title TEXT NOT NULL,
             description TEXT,
             deadline_date TEXT NOT NULL,
@@ -26,17 +27,31 @@ def init_db():
             created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
         )
     """)
+
+    columns = [row["name"] for row in conn.execute("PRAGMA table_info(tasks)")]
+    if "user_id" not in columns:
+        conn.execute("ALTER TABLE tasks ADD COLUMN user_id INTEGER")
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+        )
+    """)
     conn.commit()
     conn.close()
 
 
-# ---------- CRUD ----------
+# ---------- Tasks (every query is scoped to one user) ----------
 
-def get_all_tasks(sort_by="Due_date", tag=None, priority=None):
+def get_all_tasks(user_id, sort_by="due_date", tag=None, priority=None):
     conn = get_db_connection()
     query = "SELECT * FROM tasks"
-    conditions = []
-    params = []
+    conditions = ["user_id = ?"]
+    params = [user_id]
 
     if tag:
         conditions.append("category = ?")
@@ -45,8 +60,7 @@ def get_all_tasks(sort_by="Due_date", tag=None, priority=None):
         conditions.append("priority = ?")
         params.append(priority)
 
-    if conditions:
-        query += " WHERE " + " AND ".join(conditions)
+    query += " WHERE " + " AND ".join(conditions)
 
     # Figure out how to sort the results based on what was picked in the dropdown
     if sort_by == "date_added":
@@ -65,47 +79,75 @@ def get_all_tasks(sort_by="Due_date", tag=None, priority=None):
     return tasks
 
 
-def get_task_by_id(task_id):
+def get_task_by_id(task_id, user_id):
     conn = get_db_connection()
-    task = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
+    task = conn.execute(
+        "SELECT * FROM tasks WHERE id = ? AND user_id = ?", (task_id, user_id)
+    ).fetchone()
     conn.close()
     return task
 
 
-def create_task(title, description, deadline_date, deadline_time, priority, category):
+def create_task(user_id, title, description, deadline_date, deadline_time, priority, category):
     conn = get_db_connection()
     conn.execute(
-        """INSERT INTO tasks (title, description, deadline_date, deadline_time, priority, category)
-           VALUES (?, ?, ?, ?, ?, ?)""",
-        (title, description, deadline_date, deadline_time, priority, category),
+        """INSERT INTO tasks (user_id, title, description, deadline_date, deadline_time, priority, category)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        (user_id, title, description, deadline_date, deadline_time, priority, category),
     )
     conn.commit()
     conn.close()
 
 
-def update_task(task_id, title, description, deadline_date, deadline_time, priority, category):
+def update_task(task_id, user_id, title, description, deadline_date, deadline_time, priority, category):
     conn = get_db_connection()
     conn.execute(
         """UPDATE tasks
            SET title = ?, description = ?, deadline_date = ?, deadline_time = ?, priority = ?, category = ?
-           WHERE id = ?""",
-        (title, description, deadline_date, deadline_time, priority, category, task_id),
+           WHERE id = ? AND user_id = ?""",
+        (title, description, deadline_date, deadline_time, priority, category, task_id, user_id),
     )
     conn.commit()
     conn.close()
 
 
-def toggle_task_complete(task_id):
+def toggle_task_complete(task_id, user_id):
     conn = get_db_connection()
     conn.execute(
-        "UPDATE tasks SET is_completed = NOT is_completed WHERE id = ?", (task_id,)
+        "UPDATE tasks SET is_completed = NOT is_completed WHERE id = ? AND user_id = ?",
+        (task_id, user_id),
     )
     conn.commit()
     conn.close()
 
 
-def delete_task(task_id):
+def delete_task(task_id, user_id):
     conn = get_db_connection()
-    conn.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
+    conn.execute("DELETE FROM tasks WHERE id = ? AND user_id = ?", (task_id, user_id))
     conn.commit()
     conn.close()
+
+
+# ---------- Users ----------
+
+def create_user(name, email, password_hash):
+    """Returns True if the user was created, False if the email is already taken."""
+    conn = get_db_connection()
+    try:
+        conn.execute(
+            "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
+            (name, email, password_hash),
+        )
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
+
+
+def get_user_by_email(email):
+    conn = get_db_connection()
+    user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+    conn.close()
+    return user
