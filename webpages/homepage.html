@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title> SideQuest | Welcome </title>
+  <title> SideQuest </title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles/my_tasks.css') }}" />
@@ -11,13 +11,24 @@
 <body>
 
   <div class="app-shell">
+
+    {% include 'sidebar.html' %}
+
     <!-- Content -->
     <div class="content">
+
+      <div class="topbar">
+        <div class="topbar-search">
+          Search tasks...
+        </div>
+        <div class="topbar-date" id="topbar-date"></div>
+      </div>
+
       <main>
         <section class="hero">
           <h1>Lorem ipsum dolor sit amet consectetur adipiscing elit.</h1>
           <p>Lorem ipsum dolor sit amet consectetur adipiscing elit.</p>
-          <a href="/login-signup" class="btn btn-primary" style="display:inline-block; text-decoration:none;">Get Started</a>
+          <a href="/my-tasks" class="btn btn-primary" style="display:inline-block; text-decoration:none;">Go to My Tasks</a>
         </section>
       </main>
     </div>

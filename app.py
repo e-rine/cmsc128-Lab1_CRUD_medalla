@@ -46,6 +46,16 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/homepage")
+def homepage():
+    return render_template("homepage.html")
+
+
+@app.route("/login-signup")
+def login_signup():
+    return render_template("login_signup.html")
+
+
 @app.route("/my-tasks")
 def my_tasks():
     sort_by = request.args.get("sort", "due_date")

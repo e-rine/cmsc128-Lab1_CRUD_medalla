@@ -12,22 +12,7 @@
 
   <div class="app-shell">
 
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="brand">
-        <span class="brand-mark">TD</span>
-        SideQuest
-      </div>
-
-      <nav class="sidebar-nav">
-        <a href="/" class="{% if request.path == '/' %}active{% endif %}">
-          <span>Homepage</span>
-        </a>
-        <a href="/my-tasks" class="{% if request.path == '/my-tasks' %}active{% endif %}">
-          <span>My Tasks</span>
-        </a>
-      </nav>
-    </aside>
+    {% include 'sidebar.html' %}
 
     <!-- Content -->
     <div class="content">
@@ -41,9 +26,12 @@
 
       <main>
 
-        <div class="page-heading">
-          <h1>My Tasks</h1>
-          <p>Add a task below and set exactly when it's due.</p>
+        <div class="page-heading-row">
+          <div class="page-heading">
+            <h1>My Tasks</h1>
+            <p>Add a task and set exactly when it's due.</p>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="openAddModal()">+ Add task</button>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -192,10 +180,16 @@
         </section>
 
 
-        <!-- Add task -->
-        <section class="add-task-card">
-          <h2>Add a task</h2>
-          <form action="/add-task" method="POST">
+      </main>
+    </div>
+  </div>
+
+
+  <!-- Add task modal -->
+  <div class="modal-overlay" id="add-modal">
+    <div class="modal-box modal-wide">
+      <h3>Add a task</h3>
+      <form action="/add-task" method="POST">
             <div class="form-row stack">
               <div class="field">
                 <label for="title">Task title</label>
@@ -238,14 +232,13 @@
                 </select>
               </div>
             </div>
-            <button type="submit" class="btn btn-primary">Add task</button>
+            <div class="modal-actions">
+              <button type="button" class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary">Add task</button>
+            </div>
           </form>
-        </section>
-
-      </main>
     </div>
   </div>
-
 
   <!-- Delete confirmation modal -->
   <div class="modal-overlay" id="delete-modal">
