@@ -62,7 +62,7 @@ def get_all_tasks(user_id, sort_by="due_date", tag=None, priority=None):
 
     query += " WHERE " + " AND ".join(conditions)
 
-    # Figure out how to sort the results based on what was picked in the dropdown
+    # sort the results based on what was picked in the dropdown
     if sort_by == "date_added":
         order_clause = "created_at DESC"
     elif sort_by == "priority":
@@ -151,3 +151,37 @@ def get_user_by_email(email):
     user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
     conn.close()
     return user
+
+
+def get_user_by_id(user_id):
+    conn = get_db_connection()
+    user = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+    conn.close()
+    return user
+
+
+def update_user_name(user_id, name):
+    conn = get_db_connection()
+    conn.execute("UPDATE users SET name = ? WHERE id = ?", (name, user_id))
+    conn.commit()
+    conn.close()
+
+
+def update_user_email(user_id, email):
+    """Returns True if updated, False if another account already uses that email."""
+    conn = get_db_connection()
+    try:
+        conn.execute("UPDATE users SET email = ? WHERE id = ?", (email, user_id))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
+
+
+def update_user_password(user_id, password_hash):
+    conn = get_db_connection()
+    conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (password_hash, user_id))
+    conn.commit()
+    conn.close()

@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import datetime
 from functools import wraps
 
@@ -16,6 +17,10 @@ from backend.database import (
     toggle_task_complete,
     create_user,
     get_user_by_email,
+    get_user_by_id,
+    update_user_name,
+    update_user_email,
+    update_user_password,
 )
 
 app = Flask(__name__, template_folder="webpages")
@@ -134,6 +139,103 @@ def my_tasks():
         selected_tag=tag,
         selected_priority=priority,
     )
+
+
+EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def flash_section(kind, section, message):
+    """Flash a message that shows up inside one card of the profile page."""
+    flash(message, f"{kind}-{section}")
+
+
+def back_to_profile(section):
+    return redirect(url_for("profile") + f"#{section}-section")
+
+
+@app.route("/profile")
+@login_required
+def profile():
+    user = get_user_by_id(session["user_id"])
+    if user is None:                      # account no longer exists
+        session.clear()
+        return redirect(url_for("login_page"))
+
+    joined = datetime.strptime(user["created_at"], "%Y-%m-%d %H:%M:%S")
+    member_since = f"{joined.strftime('%B')} {joined.day}, {joined.year}"
+    return render_template("profile.html", user=user, member_since=member_since)
+
+
+@app.route("/profile/name", methods=["POST"])
+@login_required
+def update_name():
+    name = request.form.get("name", "").strip()
+
+    if not name:
+        flash_section("error", "name", "Display name can't be empty.")
+        return back_to_profile("name")
+    if len(name) > 50:
+        flash_section("error", "name", "Display name must be 50 characters or fewer.")
+        return back_to_profile("name")
+
+    update_user_name(session["user_id"], name)
+    session["user_name"] = name           # so the sidebar updates right away
+    flash_section("success", "name", "Display name updated.")
+    return back_to_profile("name")
+
+
+@app.route("/profile/email", methods=["POST"])
+@login_required
+def update_email():
+    user = get_user_by_id(session["user_id"])
+    if user is None:
+        session.clear()
+        return redirect(url_for("login_page"))
+
+    email = request.form.get("email", "").strip().lower()
+    current_password = request.form.get("current_password", "")
+
+    if not check_password_hash(user["password_hash"], current_password):
+        flash_section("error", "email", "Current password is incorrect.")
+    elif not EMAIL_PATTERN.match(email):
+        flash_section("error", "email", "Please enter a valid email address.")
+    elif email == user["email"]:
+        flash_section("error", "email", "That's already your email address.")
+    elif not update_user_email(user["id"], email):
+        flash_section("error", "email", "That email is already used by another account.")
+    else:
+        flash_section("success", "email", "Email updated. Use it the next time you log in.")
+
+    return back_to_profile("email")
+
+
+@app.route("/profile/password", methods=["POST"])
+@login_required
+def update_password():
+    user = get_user_by_id(session["user_id"])
+    if user is None:
+        session.clear()
+        return redirect(url_for("login_page"))
+
+    current_password = request.form.get("current_password", "")
+    new_password = request.form.get("new_password", "")
+    confirm_password = request.form.get("confirm_password", "")
+
+    if not check_password_hash(user["password_hash"], current_password):
+        flash_section("error", "password", "Current password is incorrect.")
+    elif len(new_password) < 8:
+        flash_section("error", "password", "New password must be at least 8 characters.")
+    elif len(new_password) > 128:
+        flash_section("error", "password", "New password must be 128 characters or fewer.")
+    elif new_password != confirm_password:
+        flash_section("error", "password", "New passwords don't match.")
+    elif check_password_hash(user["password_hash"], new_password):
+        flash_section("error", "password", "New password must be different from your current one.")
+    else:
+        update_user_password(user["id"], generate_password_hash(new_password))
+        flash_section("success", "password", "Password changed.")
+
+    return back_to_profile("password")
 
 
 @app.route("/add-task", methods=["POST"])
