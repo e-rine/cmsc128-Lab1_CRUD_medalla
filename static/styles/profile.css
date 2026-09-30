@@ -1,0 +1,90 @@
+.profile-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  margin-bottom: 20px;
+  max-width: 720px;
+}
+
+.profile-card h3 {
+  font-size: 1rem;
+  margin: 0 0 4px;
+}
+
+.card-note {
+  margin: 0 0 16px;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+}
+
+/* ---------- Header ---------- */
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.profile-avatar {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-family: "Sora", sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-identity { min-width: 0; flex: 1; }
+
+.profile-identity h2 {
+  font-size: 1.25rem;
+  margin: 0 0 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-identity p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-since {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.profile-logout {
+  display: inline-block;
+  text-decoration: none;
+}
+
+/* ---------- Forms ---------- */
+.profile-card .flash-message { margin-bottom: 14px; }
+
+.profile-card form .form-row:last-of-type { margin-bottom: 16px; }
+
+/* jump-to-section links land with some breathing room */
+.profile-card[id] { scroll-margin-top: 20px; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 640px) {
+  .profile-card .form-row { flex-direction: column; }
+}
+
+@media (max-width: 480px) {
+  .profile-header { flex-wrap: wrap; }
+  .profile-logout { width: 100%; text-align: center; }
+}

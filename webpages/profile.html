@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title> SideQuest | Profile </title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/my_tasks.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/profile.css') }}" />
+</head>
+<body>
+
+  {# Shows the flash messages that belong to one section of this page #}
+  {% macro section_flash(messages, section) %}
+    {% for category, message in messages if category.endswith('-' ~ section) %}
+      <div class="flash-message flash-{{ category.split('-')[0] }}">{{ message }}</div>
+    {% endfor %}
+  {% endmacro %}
+
+  {% set messages = get_flashed_messages(with_categories=true) %}
+
+  <div class="app-shell">
+
+    {% include 'sidebar.html' %}
+
+    <!-- Content -->
+    <div class="content">
+
+      <main>
+        <div class="page-heading">
+          <h1>Profile</h1>
+          <p>Manage your account details and password.</p>
+        </div>
+
+        {# general messages that aren't tied to a section #}
+        {% for category, message in messages if '-' not in category %}
+          <div class="flash-message flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+
+        <!-- Profile header -->
+        <section class="profile-card profile-header">
+          <div class="profile-avatar">{{ user['name'][:1]|upper }}</div>
+          <div class="profile-identity">
+            <h2>{{ user['name'] }}</h2>
+            <p>{{ user['email'] }}</p>
+            <span class="profile-since">Member since {{ member_since }}</span>
+          </div>
+          <a href="/logout" class="btn btn-ghost profile-logout">Log out</a>
+        </section>
+
+        <!-- Display name -->
+        <section class="profile-card" id="name-section">
+          <h3>Display name</h3>
+          <p class="card-note">This is the name shown in the sidebar.</p>
+          {{ section_flash(messages, 'name') }}
+          <form action="/profile/name" method="POST">
+            <div class="form-row">
+              <div class="field">
+                <label for="name">Display name</label>
+                <input type="text" id="name" name="name" value="{{ user['name'] }}" maxlength="50" required />
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Save name</button>
+          </form>
+        </section>
+
+        <!-- Email -->
+        <section class="profile-card" id="email-section">
+          <h3>Email</h3>
+          <p class="card-note">You use your email to log in, you need your current password to change it.</p>
+          {{ section_flash(messages, 'email') }}
+          <form action="/profile/email" method="POST">
+            <div class="form-row">
+              <div class="field">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" value="{{ user['email'] }}" required />
+              </div>
+              <div class="field">
+                <label for="email-password">Current password</label>
+                <input type="password" id="email-password" name="current_password" autocomplete="current-password" required />
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Save email</button>
+          </form>
+        </section>
+
+        <!-- Password -->
+        <section class="profile-card" id="password-section">
+          <h3>Password</h3>
+          <p class="card-note">Use at least 8 characters. </p>
+          {{ section_flash(messages, 'password') }}
+          <form action="/profile/password" method="POST">
+            <div class="form-row stack">
+              <div class="field">
+                <label for="current-password">Current password</label>
+                <input type="password" id="current-password" name="current_password" autocomplete="current-password" required />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="field">
+                <label for="new-password">New password</label>
+                <input type="password" id="new-password" name="new_password" minlength="8" maxlength="128" autocomplete="new-password" required />
+              </div>
+              <div class="field">
+                <label for="confirm-password">Confirm new password</label>
+                <input type="password" id="confirm-password" name="confirm_password" autocomplete="new-password" required />
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Change password</button>
+          </form>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <script>
+    var topbarDate = document.getElementById('topbar-date');
+    if (topbarDate) {
+      topbarDate.textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+    }
+  </script>
+</body>
+</html>
