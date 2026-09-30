@@ -21,7 +21,7 @@ cd todolist
 
 # 2. Create and activate a virtual environment
 python -m venv venv
-venv\Scripts\Activate.ps1      # Windows PowerShell
+venv\bin\Activate.ps1      # Windows PowerShell
 # source venv/bin/activate     # Mac/Linux
 
 # 3. Install dependencies
