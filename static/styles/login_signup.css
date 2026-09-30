@@ -94,6 +94,29 @@
 
 .auth-switch a:hover { text-decoration: underline; }
 
+.forgot-link {
+  align-self: flex-end;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--primary);
+  text-decoration: none;
+  margin-top: 2px;
+}
+
+.forgot-link:hover { text-decoration: underline; }
+
+.auth-back {
+  display: block;
+  text-align: center;
+  margin-top: 16px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.auth-back:hover { text-decoration: underline; }
+
 .field-error {
   display: none;
   font-size: 0.76rem;
@@ -102,6 +125,21 @@
 }
 
 .field-error.show { display: block; }
+
+.back-home {
+  display: inline-block;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: inherit;
+  opacity: 0.7;
+  text-decoration: underline;
+  transition: opacity 0.2s;
+}
+
+.back-home:hover {
+  opacity: 1;
+}
 
 @media (max-width: 480px) {
   .auth-card { padding: 24px 20px; }

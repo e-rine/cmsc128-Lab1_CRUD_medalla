@@ -1,6 +1,8 @@
+import hashlib
 import os
 import re
-from datetime import datetime
+import secrets
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 
 from flask import Flask, render_template, request, redirect, url_for, flash, session
@@ -21,7 +23,11 @@ from backend.database import (
     update_user_name,
     update_user_email,
     update_user_password,
+    create_reset_token,
+    get_reset_by_hash,
+    delete_reset_tokens,
 )
+from backend.mailer import send_reset_email
 
 app = Flask(__name__, template_folder="webpages")
 app.secret_key = "dev-secret-key-change-this-later"
@@ -75,6 +81,7 @@ def index():
 
 
 @app.route("/homepage")
+@login_required
 def homepage():
     return render_template("homepage.html")
 
@@ -99,6 +106,90 @@ def login_page():
     return redirect(url_for("my_tasks"))
 
 
+# ---------- Password recovery ----------
+
+RESET_TOKEN_MINUTES = 30
+
+
+def hash_token(token):
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+def get_valid_reset(token):
+    """Returns the reset row if the token exists and hasn't expired, else None."""
+    reset = get_reset_by_hash(hash_token(token))
+    if reset is None:
+        return None
+    if datetime.now(timezone.utc) > datetime.fromisoformat(reset["expires_at"]):
+        delete_reset_tokens(reset["user_id"])
+        return None
+    return reset
+
+
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "GET":
+        return render_template("forgot_password.html")
+
+    email = request.form.get("email", "").strip().lower()
+    user = get_user_by_email(email) if email else None
+
+    if user:
+        token = secrets.token_urlsafe(32)
+        expires = datetime.now(timezone.utc) + timedelta(minutes=RESET_TOKEN_MINUTES)
+        create_reset_token(user["id"], hash_token(token), expires.isoformat())
+        link = url_for("reset_password", token=token, _external=True)
+        send_reset_email(user["email"], user["name"], link, RESET_TOKEN_MINUTES)
+    else:
+        print(f"[password reset] requested for unknown email {email!r}; nothing sent.", flush=True)
+
+    # Same answer whether or not the email exists, so this page can't be used
+    # to find out who has an account.
+    flash(
+        f"Email has been sent."
+        f"",
+        "success",
+    )
+    return redirect(url_for("forgot_password"))
+
+
+@app.route("/reset-password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    reset = get_valid_reset(token)
+    if reset is None:
+        flash("The link is invalid or has expired. Please request a new one.", "error")
+        return redirect(url_for("forgot_password"))
+
+    if request.method == "GET":
+        return render_template("reset_password.html")
+
+    new_password = request.form.get("new_password", "")
+    confirm_password = request.form.get("confirm_password", "")
+    user = get_user_by_id(reset["user_id"])
+
+    error = None
+    if user is None:
+        error = "That account no longer exists."
+    elif len(new_password) < 8:
+        error = "Password must be at least 8 characters."
+    elif len(new_password) > 128:
+        error = "Password must be 128 characters or fewer."
+    elif new_password != confirm_password:
+        error = "Passwords don't match."
+    elif check_password_hash(user["password_hash"], new_password):
+        error = "Choose a password different from your current one."
+
+    if error:
+        flash(error, "error")
+        return redirect(url_for("reset_password", token=token))
+
+    update_user_password(user["id"], generate_password_hash(new_password))
+    delete_reset_tokens(user["id"])       # the link works only once
+    session.clear()
+    flash("Password updated. Log in with your new password.", "success")
+    return redirect(url_for("login_page"))
+
+
 @app.route("/signup", methods=["POST"])
 def signup():
     name = request.form.get("name", "").strip()
@@ -121,8 +212,7 @@ def signup():
 @app.route("/logout")
 def logout():
     session.clear()
-    return redirect(url_for("login_page"))
-
+    return redirect(url_for("index"))
 
 @app.route("/my-tasks")
 @login_required
@@ -196,15 +286,15 @@ def update_email():
     current_password = request.form.get("current_password", "")
 
     if not check_password_hash(user["password_hash"], current_password):
-        flash_section("error", "email", "Current password is incorrect.")
+        flash_section("error", "email", "Password is incorrect.")
     elif not EMAIL_PATTERN.match(email):
         flash_section("error", "email", "Please enter a valid email address.")
     elif email == user["email"]:
-        flash_section("error", "email", "That's already your email address.")
+        flash_section("error", "email", "That's your current email address.")
     elif not update_user_email(user["id"], email):
-        flash_section("error", "email", "That email is already used by another account.")
+        flash_section("error", "email", "That email is already in use.")
     else:
-        flash_section("success", "email", "Email updated. Use it the next time you log in.")
+        flash_section("success", "email", "Email has been updated.")
 
     return back_to_profile("email")
 
@@ -300,6 +390,14 @@ def toggle_task(task_id):
 
     toggle_task_complete(task_id, session["user_id"])
     return redirect_back()
+
+
+@app.after_request
+def no_cache(response):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 
 if __name__ == "__main__":

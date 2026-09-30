@@ -28,6 +28,7 @@ def init_db():
         )
     """)
 
+    # Older databases were created before tasks belonged to users: add the column.
     columns = [row["name"] for row in conn.execute("PRAGMA table_info(tasks)")]
     if "user_id" not in columns:
         conn.execute("ALTER TABLE tasks ADD COLUMN user_id INTEGER")
@@ -38,6 +39,15 @@ def init_db():
             name TEXT NOT NULL,
             email TEXT NOT NULL UNIQUE,
             password_hash TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS password_resets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            token_hash TEXT NOT NULL UNIQUE,
+            expires_at TEXT NOT NULL,
             created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
         )
     """)
@@ -62,7 +72,7 @@ def get_all_tasks(user_id, sort_by="due_date", tag=None, priority=None):
 
     query += " WHERE " + " AND ".join(conditions)
 
-    # sort the results based on what was picked in the dropdown
+    # Figure out how to sort the results based on what was picked in the dropdown
     if sort_by == "date_added":
         order_clause = "created_at DESC"
     elif sort_by == "priority":
@@ -183,5 +193,37 @@ def update_user_email(user_id, email):
 def update_user_password(user_id, password_hash):
     conn = get_db_connection()
     conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (password_hash, user_id))
+    conn.commit()
+    conn.close()
+
+
+# ---------- Password reset tokens ----------
+# Only a SHA-256 hash of the token is stored, so a leaked database
+# can't be used to reset anyone's password.
+
+def create_reset_token(user_id, token_hash, expires_at):
+    """Stores a new reset token. Any earlier tokens for this user stop working."""
+    conn = get_db_connection()
+    conn.execute("DELETE FROM password_resets WHERE user_id = ?", (user_id,))
+    conn.execute(
+        "INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (?, ?, ?)",
+        (user_id, token_hash, expires_at),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_reset_by_hash(token_hash):
+    conn = get_db_connection()
+    row = conn.execute(
+        "SELECT * FROM password_resets WHERE token_hash = ?", (token_hash,)
+    ).fetchone()
+    conn.close()
+    return row
+
+
+def delete_reset_tokens(user_id):
+    conn = get_db_connection()
+    conn.execute("DELETE FROM password_resets WHERE user_id = ?", (user_id,))
     conn.commit()
     conn.close()

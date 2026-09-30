@@ -214,6 +214,30 @@ a.sidebar-user.active {
   margin-bottom: 20px;
 }
 
+/* Welcome page only (<body class="welcome-page">): center the hero on screen */
+.welcome-page .content {
+  padding: 0;
+  display: flex;
+}
+
+.welcome-page main { width: 100%; }
+
+.welcome-page .hero {
+  min-height: 100vh;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.welcome-page .hero h1,
+.welcome-page .hero p {
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .page-heading-row {
   display: flex;
   justify-content: space-between;

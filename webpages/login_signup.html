@@ -15,6 +15,8 @@
 
     <div class="auth-card">
 
+      <a href="{{ url_for('index') }}" class="back-home">Back to home</a>
+
       <div class="brand auth-brand">
         <span class="brand-mark">TD</span>
         SideQuest
@@ -46,6 +48,7 @@
         <div class="field">
           <label for="login-password">Password</label>
           <input type="password" id="login-password" name="password" placeholder="Your password" required />
+          <a href="/forgot-password" class="forgot-link">Forgot password?</a>
         </div>
         <button type="submit" class="btn btn-primary auth-submit">Log in</button>
         <p class="auth-switch">Don't have an account? <a href="#" onclick="showAuth('signup'); return false;">Sign up</a></p>
