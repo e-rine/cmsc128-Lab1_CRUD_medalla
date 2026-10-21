@@ -252,3 +252,96 @@ def delete_reset_tokens(user_id):
     conn.execute("DELETE FROM password_resets WHERE user_id = ?", (user_id,))
     conn.commit()
     conn.close()
+
+
+
+# ---------- Collaborative lists ----------
+
+def create_list(owner_id, name):
+    # Creates a list and adds the owner as its first member. Returns the new list id
+    conn = get_db_connection()
+    try:
+        cursor = conn.execute(
+            "INSERT INTO lists (name, owner_id) VALUES (?, ?)", (name, owner_id)
+        )
+        list_id = cursor.lastrowid
+        conn.execute(
+            "INSERT INTO list_members (list_id, user_id) VALUES (?, ?)", (list_id, owner_id)
+        )
+        conn.commit()
+        return list_id
+    finally:
+        conn.close()
+
+
+def get_lists_for_user(user_id):
+    # Every list the user belongs to 
+    conn = get_db_connection()
+    lists = conn.execute(
+        """SELECT lists.*,
+                  owner.name AS owner_name,
+                  (SELECT COUNT(*) FROM list_members lm2 WHERE lm2.list_id = lists.id) AS member_count
+           FROM lists
+           JOIN list_members ON list_members.list_id = lists.id
+           JOIN users AS owner ON owner.id = lists.owner_id
+           WHERE list_members.user_id = ?
+           ORDER BY lists.name COLLATE NOCASE ASC""",
+        (user_id,),
+    ).fetchall()
+    conn.close()
+    return lists
+
+
+def get_list_for_user(list_id, user_id):
+    # Returns the list only if the user is a member, else None
+    conn = get_db_connection()
+    row = conn.execute(
+        """SELECT lists.* FROM lists
+           JOIN list_members ON list_members.list_id = lists.id
+           WHERE lists.id = ? AND list_members.user_id = ?""",
+        (list_id, user_id),
+    ).fetchone()
+    conn.close()
+    return row
+
+
+def is_list_owner(list_id, user_id):
+    conn = get_db_connection()
+    row = conn.execute(
+        "SELECT 1 FROM lists WHERE id = ? AND owner_id = ?", (list_id, user_id)
+    ).fetchone()
+    conn.close()
+    return row is not None
+
+
+def add_member(list_id, user_id):
+    # Returns True if added, False if already a member.
+    # Doesn't check ownership, so the route must call is_list_owner() first
+    conn = get_db_connection()
+    try:
+        conn.execute(
+            "INSERT INTO list_members (list_id, user_id) VALUES (?, ?)", (list_id, user_id)
+        )
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
+
+
+def get_members(list_id):
+    # Members of a list, owner first 
+    conn = get_db_connection()
+    members = conn.execute(
+        """SELECT users.id, users.name, users.email,
+                  (users.id = lists.owner_id) AS is_owner
+           FROM list_members
+           JOIN users ON users.id = list_members.user_id
+           JOIN lists ON lists.id = list_members.list_id
+           WHERE list_members.list_id = ?
+           ORDER BY is_owner DESC, users.name COLLATE NOCASE ASC""",
+        (list_id,),
+    ).fetchall()
+    conn.close()
+    return members
