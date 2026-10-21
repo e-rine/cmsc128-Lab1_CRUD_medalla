@@ -136,5 +136,4 @@ def delete_group(list_id):
 ## Notes
 
 - Password reset links last 30 minutes and only work once.
-- Change the Flask `secret_key` in `app.py` before deploying anywhere public.
-- Keep `.env` and `todolist.db` out of Git.
+- `.env` and `todolist.db` are out of Git.
