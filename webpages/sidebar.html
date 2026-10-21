@@ -12,6 +12,9 @@
     <a href="/my-tasks" class="{% if request.path == '/my-tasks' %}active{% endif %}">
       <span>My Tasks</span>
     </a>
+    <a href="/groups" class="{% if request.path.startswith('/groups') %}active{% endif %}">
+      <span>My Groups</span>
+    </a>
   </nav>
 
   <div class="sidebar-account">
