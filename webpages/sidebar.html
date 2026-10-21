@@ -9,10 +9,10 @@
     <a href="/homepage" class="{% if request.path == '/' %}active{% endif %}">
       <span>Homepage</span>
     </a>
-    <a href="/my-tasks" class="{% if request.path == '/my-tasks' %}active{% endif %}">
+    <a href="/my-tasks" class="{% if request.path == '/my-tasks' and not request.args.get('list') %}active{% endif %}">
       <span>My Tasks</span>
     </a>
-    <a href="/groups" class="{% if request.path.startswith('/groups') %}active{% endif %}">
+    <a href="/groups" class="{% if request.path.startswith('/groups') or (request.path == '/my-tasks' and request.args.get('list')) %}active{% endif %}">
       <span>My Groups</span>
     </a>
   </nav>
