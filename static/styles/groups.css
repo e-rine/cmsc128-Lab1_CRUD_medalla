@@ -192,3 +192,55 @@ main:has(.group-card) {
   display: flex;
   gap: 8px;
 }
+
+/* Card action buttons */
+.group-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.group-btn svg {
+  flex-shrink: 0;
+}
+
+.group-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(17, 24, 39, 0.12);
+}
+
+.group-btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.group-btn.btn-ghost {
+  border: 1px solid #e5e7eb;
+  color: #374151;
+  background: #fff;
+}
+
+.group-btn.btn-ghost:hover {
+  background: #f9fafb;
+  border-color: #cbd5e1;
+}
+
+/* Stack the card on small screens */
+@media (max-width: 640px) {
+  .profile-card.group-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .group-side {
+    justify-content: space-between;
+  }
+}
