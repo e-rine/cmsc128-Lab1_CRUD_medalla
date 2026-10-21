@@ -5,7 +5,7 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from backend.database import (
@@ -26,6 +26,12 @@ from backend.database import (
     create_reset_token,
     get_reset_by_hash,
     delete_reset_tokens,
+    create_list,
+    get_lists_for_user,
+    get_list_for_user,
+    is_list_owner,
+    add_member,
+    get_members
 )
 from backend.mailer import send_reset_email
 
@@ -221,10 +227,20 @@ def my_tasks():
     tag = request.args.get("tag", "")
     priority = request.args.get("priority", "")
 
-    tasks = get_all_tasks(session["user_id"], sort_by=sort_by, tag=tag or None, priority=priority or None)
+    # ?list=ID shows that group's shared task list; no list = personal tasks
+    list_id = request.args.get("list", type=int)
+    current_list = None
+    if list_id is not None:
+        current_list = get_list_for_user(list_id, session["user_id"])
+        if current_list is None:          # not a member -> pretend it doesn't exist
+            abort(404)
+
+    tasks = get_all_tasks(session["user_id"], sort_by=sort_by, tag=tag or None,
+                          priority=priority or None, list_id=list_id)
     return render_template(
         "my_tasks.html",
         tasks=tasks,
+        current_list=current_list,
         sort_by=sort_by,
         selected_tag=tag,
         selected_priority=priority,
@@ -338,11 +354,16 @@ def add_task():
     priority = request.form.get("priority", "medium")
     category = request.form.get("category", "other")
 
+    list_id = request.form.get("list_id", type=int)
+    if list_id is not None and get_list_for_user(list_id, session["user_id"]) is None:
+        abort(404)
+
     if not title or not deadline_date or not deadline_time:
         flash("Title, deadline date, and deadline time are required.", "error")
         return redirect_back()
 
-    create_task(session["user_id"], title, description, deadline_date, deadline_time, priority, category)
+    create_task(session["user_id"], title, description, deadline_date, deadline_time,
+                priority, category, list_id=list_id)
     flash("Task added successfully.", "success")
     return redirect_back()
 
@@ -390,6 +411,58 @@ def toggle_task(task_id):
 
     toggle_task_complete(task_id, session["user_id"])
     return redirect_back()
+
+@app.route("/groups")
+@login_required
+def groups():
+    user_id = session["user_id"]
+    groups = []
+    for lst in get_lists_for_user(user_id):
+        g = dict(lst)
+        g["members"] = get_members(lst["id"])
+        g["is_owner"] = lst["owner_id"] == user_id
+        groups.append(g)
+    return render_template("groups.html", groups=groups)
+
+
+@app.route("/groups/create", methods=["POST"])
+@login_required
+def create_group():
+    name = request.form.get("name", "").strip()
+    if not name:
+        flash("Group name can't be empty.", "error")
+    elif len(name) > 50:
+        flash("Group name must be 50 characters or fewer.", "error")
+    else:
+        create_list(session["user_id"], name)
+        flash(f"Group \"{name}\" created.", "success")
+    return redirect(url_for("groups"))
+
+
+@app.route("/groups/<int:list_id>/members", methods=["POST"])
+@login_required
+def add_group_member(list_id):
+    user_id = session["user_id"]
+
+    # Not a member -> pretend it doesn't exist
+    if get_list_for_user(list_id, user_id) is None:
+        abort(404)
+    if not is_list_owner(list_id, user_id):
+        flash("Only the owner can add members.", "error")
+        return redirect(url_for("groups"))
+
+    email = request.form.get("email", "").strip().lower()
+    target = get_user_by_email(email) if email else None
+
+    if target is None:
+        flash("No account found with that email.", "error")
+    elif target["id"] == user_id:
+        flash("You're already in this group.", "error")
+    elif not add_member(list_id, target["id"]):
+        flash(f"{target['name']} is already in this group.", "error")
+    else:
+        flash(f"{target['name']} was added to the group.", "success")
+    return redirect(url_for("groups"))
 
 
 @app.after_request
