@@ -17,6 +17,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
+            list_id INTEGER,
             title TEXT NOT NULL,
             description TEXT,
             deadline_date TEXT NOT NULL,
@@ -28,10 +29,14 @@ def init_db():
         )
     """)
 
-    # Older databases were created before tasks belonged to users: add the column.
+    # Older databases were created before tasks belonged to users / lists: add the columns.
     columns = [row["name"] for row in conn.execute("PRAGMA table_info(tasks)")]
     if "user_id" not in columns:
         conn.execute("ALTER TABLE tasks ADD COLUMN user_id INTEGER")
+    if "list_id" not in columns:
+        # NULL = personal task (visible only to tasks.user_id)
+        # A number = task in that collaborative list
+        conn.execute("ALTER TABLE tasks ADD COLUMN list_id INTEGER")
 
     conn.execute("""
         CREATE TABLE IF NOT EXISTS users (
@@ -51,6 +56,26 @@ def init_db():
             created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
         )
     """)
+
+    # Collaborative lists 
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS lists (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            owner_id INTEGER NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+        )
+    """)
+    # Who can see a list. The owner is always inserted here too.
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS list_members (
+            list_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            added_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+            PRIMARY KEY (list_id, user_id)
+        )
+    """)
+
     conn.commit()
     conn.close()
 
