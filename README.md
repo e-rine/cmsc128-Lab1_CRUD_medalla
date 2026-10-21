@@ -1,167 +1,140 @@
 # SideQuest
 
-SideQuest is a gamified to-do list web app that encourages users to complete quests and achievements by finishing their tasks. Each person has their own account, and every task belongs to the account that created it.
+SideQuest is a gamified to-do list web app. Each person has their own account and private tasks, and people can also create groups to share a task list with others.
 
 ## Features
 
-**Accounts and security**
-- Sign up with a name, email, and password
-- Log in and log out
-- Password recovery by email (forgot password and reset password)
-- Profile page to change the display name, email, and password
-- Passwords are hashed, never stored as plain text
-
-**Tasks**
-- Add, edit, and delete tasks
-- Mark tasks done or not done
-- Each task has a title, description, deadline date and time, priority, and category (tag)
-- Filter by tag and priority
-- Sort by due date, date added, priority, or tag
-- Overdue tasks are flagged
-- Every query is limited to the logged-in user, so nobody can see or change another user's tasks
+- Sign up, log in, log out, and reset a forgotten password by email
+- Profile page to change your name, email, and password
+- Add, edit, delete, and complete tasks (title, description, deadline, priority, tag)
+- Filter by tag and priority, sort by due date, date added, priority, or tag
+- Groups: create a group, add members by email, see members, remove members or leave, and delete the group
+- Personal tasks are private, and group tasks are only visible to group members
 
 ## Tech Stack
 
 | Part | Choice |
 |------|--------|
-| Frontend | HTML, CSS, JavaScript (vanilla), rendered with Flask (Jinja) templates |
+| Frontend | HTML, CSS, vanilla JavaScript, Flask (Jinja) templates |
 | Backend | Flask (Python) |
 | Database | SQLite (`todolist.db`) |
-| Authentication | Server-side sessions (Flask) with password hashing (Werkzeug) |
-| Email | SMTP through Python's `smtplib` |
+| Login | Flask sessions, passwords hashed with Werkzeug |
+| Email | SMTP (`smtplib`) |
 
-**Why this stack:** Flask is lightweight and pairs naturally with Python, so the whole project stays in one language. SQLite needs no separate server, account, or API keys. It is built into Python and stores everything in a single file, which is enough for a small project like this. Werkzeug comes installed with Flask, so password hashing needs no extra packages.
+## How Activity 1 and Activity 2 Were Merged
+
+I did not merge two separate branches. I used `git switch` to create a new branch and move off the **act2** branch and built on top of it, so Activity 2's code already had unique user access and everything else was added as new commits on the same branch.
+
 
 ## Project Structure
 
 ```
 todolist/
-├── app.py                 # Flask app and all routes
+├── app.py              # Flask app and all routes
 ├── backend/
-│   ├── database.py        # All SQL queries (tasks, users, reset tokens)
-│   └── mailer.py          # Sends the password reset email
-├── webpages/              # HTML templates
-├── todolist.db            # SQLite database (created automatically, not in Git)
-├── .env                   # Private settings (not in Git)
-└── .gitignore
+│   ├── database.py     # All SQL queries
+│   └── mailer.py       # Sends the password reset email
+├── webpages/           # HTML templates
+├── static/             # CSS (styles/) and JavaScript (scripts/)
+├── todolist.db         # SQLite database 
+└── .env                # Email settings
 ```
 
-## Running It Locally
+## Installation and Running Locally
 
-**Requirements:** Python 3 installed.
+Requires Python 3 and Git.
 
 ```bash
-# 1. Clone the repo
+# 1. Clone the repo and switch to the branch
 git clone <your-repo-url>
 cd todolist
+git switch <branch-name>
 
 # 2. Create and activate a virtual environment
 python -m venv venv
-venv\Scripts\Activate.ps1        # Windows PowerShell
-# source venv/bin/activate       # Mac/Linux
+venv\bin\Activate.ps1        # Windows PowerShell
 
 # 3. Install dependencies
 pip install flask
 
-# 4. (Optional) Set up email, see "Email Setup" below
-
-# 5. Run the app
+# 4. Run the app
 python app.py
 ```
 
-Then open **http://127.0.0.1:5000/** in your browser.
+Open **http://127.0.0.1:5000/** and create an account. 
 
-## Database Setup
-
-No manual setup is needed. When the app starts, `init_db()` in `backend/database.py` creates `todolist.db` and its tables if they do not exist yet. It also upgrades older databases by adding the `user_id` column to `tasks`. Tasks created before accounts existed have no owner, so they will not show up for any user.
-
-There is no seed data. Create an account on the sign up page to start.
-
-**Tables**
+## Database Schema
 
 | Table | Purpose | Main columns |
 |-------|---------|--------------|
-| `users` | Accounts | `id`, `name`, `email` (unique), `password_hash`, `created_at` |
-| `tasks` | Tasks owned by a user | `id`, `user_id`, `title`, `description`, `deadline_date`, `deadline_time`, `priority`, `category`, `is_completed`, `created_at` |
-| `password_resets` | Password reset tickets | `id`, `user_id`, `token_hash` (unique), `expires_at`, `created_at` |
+| `users` | Accounts | `id`, `name`, `email` (unique), `password_hash` |
+| `tasks` | Personal or group tasks | `id`, `user_id`, `list_id`, `title`, `description`, `deadline_date`, `deadline_time`, `priority`, `category`, `is_completed` |
+| `lists` | Groups | `id`, `name`, `owner_id` |
+| `list_members` | Who is in which group | `list_id`, `user_id` |
+| `password_resets` | Reset links (only a hash of the token is stored) | `id`, `user_id`, `token_hash`, `expires_at` |
 
-## Email Setup
+**How they relate**
 
-Password reset links are sent by email. Create a file named `.env` in the project root (next to `app.py`):
+- A **user** creates **tasks** (`tasks.user_id`) and owns **lists** (`lists.owner_id`).
+- A task with `list_id = NULL` is **personal**: only its creator can see it.
+- A task with a `list_id` belongs to that **group**: every member can see and edit it.
+- Users and lists are many-to-many through `list_members`. The owner is added there too when the group is created.
+- The relationships are enforced in the code, not with SQLite `FOREIGN KEY` constraints.
 
+## Ownership Checks
+
+The server checks who is asking on every request. It always uses `session["user_id"]`, never an id sent from the browser.
+
+**Tasks.** Every single-task query (get, edit, complete, delete) uses this rule in `backend/database.py`:
+
+```python
+ACCESS_CLAUSE = """(
+    (tasks.list_id IS NULL AND tasks.user_id = ?)
+    OR tasks.list_id IN (SELECT list_id FROM list_members WHERE user_id = ?)
+)"""
 ```
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=youremail@gmail.com
-SMTP_PASSWORD=your-16-letter-app-password
-SMTP_FROM=youremail@gmail.com
+
+A task is accessible only if it is your own personal task, or it is in a group you belong to.
+
+**Groups.** Routes check membership first, then ownership:
+
+```python
+@app.route("/groups/<int:list_id>/delete", methods=["POST"])
+@login_required
+def delete_group(list_id):
+    user_id = session["user_id"]
+    if get_list_for_user(list_id, user_id) is None:   # not a member
+        abort(404)
+    if not is_list_owner(list_id, user_id):           # member, but not the owner
+        return group_error("Only the owner can delete this group.")
+    delete_list(list_id)
 ```
-
-- For Gmail, use an **App Password**, not your normal password. You need 2-Step Verification turned on to create one.
-- `SMTP_PORT` defaults to 587 and `SMTP_FROM` defaults to `SMTP_USER` if left out.
-- `.env` is listed in `.gitignore` and must never be committed.
-
-**Demo mode:** if `SMTP_HOST` is not set, or sending fails, no email is sent. The reset link is printed in the terminal instead, so the whole flow can still be tested. The terminal shows `Email ON` or `Email OFF` when the app starts.
 
 ## Routes
 
-All data operations go through Flask routes in `app.py`, which read and write SQLite using functions in `backend/database.py`.
-
-**Pages and accounts**
-
-| Method | Route | What it does | Login required |
-|--------|-------|--------------|----------------|
-| GET | `/` | Landing page | No |
-| GET | `/homepage` | Home page | Yes |
-| GET, POST | `/login-signup` | Show the login/sign up page, and log in | No |
-| POST | `/signup` | Create an account | No |
-| GET | `/logout` | Clear the session and log out | No |
-| GET | `/profile` | View profile | Yes |
-| POST | `/profile/name` | Change display name | Yes |
-| POST | `/profile/email` | Change email (needs current password) | Yes |
-| POST | `/profile/password` | Change password (needs current password) | Yes |
-
-**Password recovery**
-
-| Method | Route | What it does | Login required |
-|--------|-------|--------------|----------------|
-| GET, POST | `/forgot-password` | Show the form, then create a reset ticket and email the link | No |
-| GET, POST | `/reset-password/<token>` | Check the link, show the form, then save the new password | No |
-
-**Tasks**
-
-| Method | Route | Operation | What it does | Login required |
-|--------|-------|-----------|--------------|----------------|
-| GET | `/my-tasks` | Read | View your tasks (supports `sort`, `tag`, `priority` query values) | Yes |
-| POST | `/add-task` | Create | Add a new task | Yes |
-| POST | `/edit-task/<id>` | Update | Edit an existing task | Yes |
-| POST | `/toggle-task/<id>` | Update | Mark a task done / not done | Yes |
-| DELETE | `/delete-task/<id>` | Delete | Remove a task | Yes |
-
-## How Authentication Works
-
-**Sign up.** The form is sent to `/signup`. The app checks that all fields are filled, the password is at least 8 characters, and both password boxes match. The password is hashed with Werkzeug's `generate_password_hash` (a salted hash, scrypt by default) and `create_user()` inserts the account. The `email` column is `UNIQUE`, so a repeated email is rejected.
-
-**Log in.** `/login-signup` looks the account up by email and checks the typed password against the saved hash with `check_password_hash`. If either the email or password is wrong, the same message is shown ("Incorrect email or password") so it does not reveal which one was wrong.
-
-**Session.** After a successful login, the app stores `user_id` and `user_name` in the Flask session, which is a signed cookie kept in the browser. The `@login_required` decorator checks for `user_id` in the session before running a protected route. If it is missing, the person is redirected to the login page (or gets a `401` for the background delete request). Logging out calls `session.clear()`. Every page is sent with no-cache headers, so pressing Back after logout does not show a saved copy of a private page.
-
-**Task ownership.** Every task query includes `WHERE user_id = ?` with the logged-in user's id, so users can only read, edit, toggle, or delete their own tasks.
-
-## How Password Recovery Works
-
-1. The person enters their email on `/forgot-password`.
-2. If an account exists, the app creates a random token with `secrets.token_urlsafe(32)`.
-3. Only the **SHA-256 hash** of the token is saved in `password_resets`, along with the user id and an expiry time 30 minutes away. The real token is never stored, so a leaked database cannot be used to open reset links. Any older ticket for that user is deleted first, so only the newest link works.
-4. The app emails a link like `/reset-password/<token>` (or prints it in the terminal in demo mode).
-5. The page always shows the same message ("Email has been sent"), whether or not the email has an account, so it cannot be used to find out who is registered.
-6. When the link is opened, the app hashes the token from the URL and looks it up. If there is no match or it has expired, the person is sent back to request a new link.
-7. On submit, the new password must be 8 to 128 characters, match the confirmation, and differ from the current password.
-8. The new password is hashed and saved, the reset ticket is deleted (so the link works only once), the session is cleared, and the person is sent to log in.
-
-Reset links last **30 minutes** (`RESET_TOKEN_MINUTES` in `app.py`).
+| Method | Route | What it does | Check |
+|--------|-------|--------------|-------|
+| POST | `/signup` | Create an account | None |
+| GET, POST | `/login-signup` | Log in | None |
+| GET | `/logout` | Log out | None |
+| GET, POST | `/forgot-password` | Request a reset link | None |
+| GET, POST | `/reset-password/<token>` | Set a new password | Valid, unexpired token |
+| GET | `/profile` | View profile | Logged in |
+| POST | `/profile/name`, `/email`, `/password` | Update profile | Logged in (email and password also need the current password) |
+| GET | `/my-tasks` | Your personal tasks | Only your personal tasks are returned |
+| GET | `/my-tasks?list=<id>` | A group's tasks | Must be a member, else 404 |
+| POST | `/add-task` | Add a task (to a group if `list_id` is sent) | Group: must be a member, else 404 |
+| POST | `/edit-task/<id>` | Edit a task | `ACCESS_CLAUSE` |
+| POST | `/toggle-task/<id>` | Mark done or not done | `ACCESS_CLAUSE` |
+| DELETE | `/delete-task/<id>` | Delete a task | `ACCESS_CLAUSE` |
+| GET | `/groups` | Your groups | Only groups you belong to |
+| POST | `/groups/create` | Create a group | Logged in; you become the owner |
+| POST | `/groups/<id>/members` | Add a member by email | Member (else 404), then owner |
+| POST | `/groups/<id>/members/<member_id>/remove` | Remove a member, or leave | Member (else 404). Owner can remove anyone but themselves; others can only remove themselves. The owner can't be removed |
+| POST | `/groups/<id>/delete` | Delete the group and its tasks | Member (else 404), then owner |
 
 ## Notes
 
-- The Flask `secret_key` in `app.py` is a development value. Change it before deploying anywhere public.
-- `.env` and `todolist.db` should stay out of Git. Both are listed in `.gitignore`.
+- Password reset links last 30 minutes and only work once.
+- Change the Flask `secret_key` in `app.py` before deploying anywhere public.
+- Keep `.env` and `todolist.db` out of Git.
