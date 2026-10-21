@@ -585,3 +585,7 @@ a.sidebar-user.active {
     row-gap: 6px;
   }
 }
+
+.task-added-by {
+  font-weight: 600;
+}

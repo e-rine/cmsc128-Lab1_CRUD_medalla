@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title> SideQuest | My Groups </title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/my_tasks.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/profile.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/groups.css') }}" />
+</head>
+<body>
+
+  <div class="app-shell">
+
+    {% include 'sidebar.html' %}
+
+    <div class="content">
+
+      <div class="topbar">
+        <div class="topbar-search">
+          Search groups...
+        </div>
+        <div class="topbar-date" id="topbar-date"></div>
+      </div>
+
+      <main>
+        <div class="page-heading-row">
+          <div class="page-heading">
+            <h1>My Groups</h1>
+            <p>Create a shared list and add people by email.</p>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="openCreateModal()">+ Create group</button>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for category, message in messages %}
+            <div class="flash-message flash-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endwith %}
+
+        <!-- Groups you belong to -->
+        {% for g in groups %}
+        <section class="profile-card group-card" id="group-{{ g['id'] }}">
+          <div class="group-info">
+            <h3><a class="group-title-link" href="/my-tasks?list={{ g['id'] }}" title="Open tasks">{{ g['name'] }}</a></h3>
+            <p class="card-note">
+              {% if g['is_owner'] %}You own this group{% else %}Owned by {{ g['owner_name'] }}{% endif %}
+              &middot; {{ g['member_count'] }} member{{ '' if g['member_count'] == 1 else 's' }}
+            </p>
+
+            <!-- Source for the members popup (not shown on the card) -->
+            <ul class="member-list gm-hidden">
+              {% for m in g['members'] %}
+              <li>
+                <strong>{{ m['name'] }}</strong>
+                <span>{{ m['email'] }}</span>
+                {% if m['is_owner'] %}<em>(owner)</em>{% endif %}
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          <div class="group-side">
+            <div class="group-hover-actions">
+              <button type="button" class="btn btn-ghost"
+                      data-id="{{ g['id'] }}" data-name="{{ g['name'] }}"
+                      onclick="openMembersModal(this.dataset.id, this.dataset.name)">See members</button>
+              {% if g['is_owner'] %}
+              <button type="button" class="btn btn-ghost"
+                      data-id="{{ g['id'] }}" data-name="{{ g['name'] }}"
+                      onclick="openAddMemberModal(this.dataset.id, this.dataset.name)">Add member</button>
+              {% endif %}
+            </div>
+            {% if g['is_owner'] %}
+            <button type="button" class="group-delete-btn" title="Delete group" aria-label="Delete group {{ g['name'] }}"
+                    data-id="{{ g['id'] }}" data-name="{{ g['name'] }}"
+                    onclick="openDeleteModal(this.dataset.id, this.dataset.name)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                <path d="M10 11v6"></path>
+                <path d="M14 11v6"></path>
+                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+              </svg>
+            </button>
+            {% endif %}
+          </div>
+        </section>
+        {% else %}
+        <section class="profile-card">
+          <p class="card-note">You're not in any groups yet. Create one above, or ask someone to add you.</p>
+        </section>
+        {% endfor %}
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Create group modal -->
+  <div class="gm-overlay" id="create-modal">
+    <div class="gm-box">
+      <h3>Create a group</h3>
+      <p class="card-note">You'll be the owner. Members are optional and can be added later.</p>
+      <form action="/groups/create" method="POST">
+        <div class="field">
+          <label for="group-name">Group name</label>
+          <input type="text" id="group-name" name="name" placeholder="e.g. Nikko's Group List" maxlength="50" required />
+        </div>
+
+        <label class="gm-members-label">Add members by email (optional)</label>
+        <div id="member-rows"></div>
+        <button type="button" class="btn btn-ghost" onclick="addMemberRow()">+ Add another</button>
+
+        <div class="gm-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('create-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create group</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add member modal (for an existing group) -->
+  <div class="gm-overlay" id="add-member-modal">
+    <div class="gm-box">
+      <h3>Add a member</h3>
+      <p class="card-note" id="add-member-note"></p>
+      <form id="add-member-form" method="POST">
+        <div class="field">
+          <label for="member-email">Email</label>
+          <input type="email" id="member-email" name="email" placeholder="friend@example.com" required />
+        </div>
+        <div class="gm-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('add-member-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add member</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Members modal -->
+  <div class="gm-overlay" id="members-modal">
+    <div class="gm-box">
+      <h3 id="members-title">Members</h3>
+      <p class="card-note" id="members-note"></p>
+      <ul class="member-list" id="members-list"></ul>
+      <div class="gm-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('members-modal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete group modal -->
+  <div class="gm-overlay" id="delete-modal">
+    <div class="gm-box">
+      <h3>Delete group?</h3>
+      <p class="card-note" id="delete-note"></p>
+      <form id="delete-form" method="POST">
+        <div class="gm-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('delete-modal')">Cancel</button>
+          <button type="submit" class="btn btn-danger">Delete group</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='scripts/groups.js') }}"></script>
+</body>
+</html>

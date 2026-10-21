@@ -5,7 +5,7 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 
-from flask import Flask, render_template, request, redirect, url_for, flash, session, abort
+from flask import Flask, render_template, request, redirect, url_for, flash, session, abort, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from backend.database import (
@@ -31,12 +31,14 @@ from backend.database import (
     get_list_for_user,
     is_list_owner,
     add_member,
-    get_members
+    get_members,
+    delete_list
 )
 from backend.mailer import send_reset_email
 
 app = Flask(__name__, template_folder="webpages")
-app.secret_key = "dev-secret-key-change-this-later"
+# Set SECRET_KEY in your .env file; the fallback is only for local development.
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key-change-this-later")
 
 # Create/upgrade the tables whenever the app loads (python app.py, flask run, ...)
 init_db()
@@ -425,18 +427,68 @@ def groups():
     return render_template("groups.html", groups=groups)
 
 
+def wants_json():
+    """True when the request came from the modals' fetch() call in groups.js."""
+    return request.headers.get("X-Requested-With") == "fetch"
+
+
+def group_error(message):
+    """Report a validation error without closing the modal (JSON) or via flash (plain form)."""
+    if wants_json():
+        return jsonify(ok=False, error=message), 400
+    flash(message, "error")
+    return redirect(url_for("groups"))
+
+
+def group_success(message):
+    flash(message, "success")
+    if wants_json():
+        return jsonify(ok=True, redirect=url_for("groups"))
+    return redirect(url_for("groups"))
+
+
 @app.route("/groups/create", methods=["POST"])
 @login_required
 def create_group():
+    user_id = session["user_id"]
     name = request.form.get("name", "").strip()
+
     if not name:
-        flash("Group name can't be empty.", "error")
-    elif len(name) > 50:
-        flash("Group name must be 50 characters or fewer.", "error")
-    else:
-        create_list(session["user_id"], name)
-        flash(f"Group \"{name}\" created.", "success")
-    return redirect(url_for("groups"))
+        return group_error("Group name can't be empty.")
+    if len(name) > 50:
+        return group_error("Group name must be 50 characters or fewer.")
+
+    members = []      # accounts to add, no duplicates
+    invalid = []      # badly written emails, or emails with no account
+    own_email = False
+    seen = set()
+    for raw in request.form.getlist("emails"):
+        email = raw.strip().lower()
+        if not email or email in seen:
+            continue
+        seen.add(email)
+
+        if not EMAIL_PATTERN.match(email):
+            invalid.append(email)
+            continue
+        target = get_user_by_email(email)
+        if target is None:
+            invalid.append(email)
+        elif target["id"] == user_id:
+            own_email = True
+        else:
+            members.append(target)
+
+    if own_email:
+        return group_error("You can't add yourself. You're automatically the owner of the group.")
+    if invalid:
+        return group_error("Invalid or unregistered email: " + ", ".join(invalid))
+
+    list_id = create_list(user_id, name)
+    for target in members:
+        add_member(list_id, target["id"])
+
+    return group_success(f'Group "{name}" created.')
 
 
 @app.route("/groups/<int:list_id>/members", methods=["POST"])
@@ -448,21 +500,34 @@ def add_group_member(list_id):
     if get_list_for_user(list_id, user_id) is None:
         abort(404)
     if not is_list_owner(list_id, user_id):
-        flash("Only the owner can add members.", "error")
-        return redirect(url_for("groups"))
+        return group_error("Only the owner can add members.")
 
     email = request.form.get("email", "").strip().lower()
     target = get_user_by_email(email) if email else None
 
     if target is None:
-        flash("No account found with that email.", "error")
-    elif target["id"] == user_id:
-        flash("You're already in this group.", "error")
-    elif not add_member(list_id, target["id"]):
-        flash(f"{target['name']} is already in this group.", "error")
-    else:
-        flash(f"{target['name']} was added to the group.", "success")
-    return redirect(url_for("groups"))
+        return group_error("No account found with that email.")
+    if target["id"] == user_id:
+        return group_error("You're already in this group.")
+    if not add_member(list_id, target["id"]):
+        return group_error(f"{target['name']} is already in this group.")
+    return group_success(f"{target['name']} was added to the group.")
+
+
+@app.route("/groups/<int:list_id>/delete", methods=["POST"])
+@login_required
+def delete_group(list_id):
+    user_id = session["user_id"]
+
+    # Not a member -> pretend it doesn't exist
+    if get_list_for_user(list_id, user_id) is None:
+        abort(404)
+    if not is_list_owner(list_id, user_id):
+        return group_error("Only the owner can delete this group.")
+
+    name = get_list_for_user(list_id, user_id)["name"]
+    delete_list(list_id)
+    return group_success(f'Group "{name}" was deleted.')
 
 
 @app.after_request

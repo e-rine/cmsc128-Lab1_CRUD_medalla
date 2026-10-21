@@ -28,8 +28,13 @@
 
         <div class="page-heading-row">
           <div class="page-heading">
+            {% if current_list %}
+            <h1>{{ current_list['name'] }}</h1>
+            <p>Collaborative To-Do-List &middot; Everyone in the group can edit and see these tasks. <a href="/groups">Back to groups</a></p>
+            {% else %}
             <h1>My Tasks</h1>
             <p>Add a task and set exactly when it's due.</p>
+            {% endif %}
           </div>
           <button type="button" class="btn btn-primary" onclick="openAddModal()">+ Add task</button>
         </div>
@@ -45,6 +50,7 @@
         <!-- Filter & sort bar -->
         <section class="filter-bar">
           <form method="GET" action="/my-tasks" class="filter-bar-form" id="filter-form">
+            {% if current_list %}<input type="hidden" name="list" value="{{ current_list['id'] }}" />{% endif %}
             <div class="field">
               <label for="sort">Sort by</label>
               <select id="sort" name="sort" onchange="document.getElementById('filter-form').submit()">
@@ -75,7 +81,7 @@
               </select>
             </div>
             {% if selected_tag or selected_priority or sort_by != 'due_date' %}
-            <a href="/my-tasks" class="btn btn-ghost filter-clear">Clear filters</a>
+            <a href="/my-tasks{% if current_list %}?list={{ current_list['id'] }}{% endif %}" class="btn btn-ghost filter-clear">Clear filters</a>
             {% endif %}
           </form>
         </section>
@@ -100,6 +106,9 @@
 
             <div class="task-body">
               <div class="task-title">{{ task['title'] }}</div>
+              {% if current_list and task['creator_name'] %}
+              <div class="task-description task-added-by">Added by {{ task['creator_name'] }}</div>
+              {% endif %}
               {% if task['description'] %}
               <div class="task-description">{{ task['description'] }}</div>
               {% endif %}
@@ -118,10 +127,10 @@
             </div>
 
             <div class="task-menu">
-              <button type="button" class="menu-trigger" onclick="toggleMenu({{ task['id'] }})">&#8942;</button>
+              <button type="button" class="menu-trigger" data-id="{{ task['id'] }}" onclick="toggleMenu(this.dataset.id)">&#8942;</button>
               <div class="menu-dropdown" id="menu-{{ task['id'] }}">
-                <button type="button" onclick="toggleEditForm({{ task['id'] }})">Edit</button>
-                <button type="button" class="danger-option" onclick="openDeleteModal({{ task['id'] }}, '{{ task['title']|replace("'", "\\'") }}')">Delete</button>
+                <button type="button" data-id="{{ task['id'] }}" onclick="toggleEditForm(this.dataset.id)">Edit</button>
+                <button type="button" class="danger-option" data-id="{{ task['id'] }}" data-title="{{ task['title'] }}" onclick="openDeleteModal(this.dataset.id, this.dataset.title)">Delete</button>
               </div>
             </div>
 
@@ -169,7 +178,7 @@
               </div>
               <div class="form-actions">
                 <button type="submit" class="btn btn-primary">Save changes</button>
-                <button type="button" class="btn btn-ghost" onclick="toggleEditForm({{ task['id'] }})">Cancel</button>
+                <button type="button" class="btn btn-ghost" data-id="{{ task['id'] }}" onclick="toggleEditForm(this.dataset.id)">Cancel</button>
               </div>
             </form>
           </article>
@@ -190,6 +199,7 @@
     <div class="modal-box modal-wide">
       <h3>Add a task</h3>
       <form action="/add-task" method="POST">
+            {% if current_list %}<input type="hidden" name="list_id" value="{{ current_list['id'] }}" />{% endif %}
             <div class="form-row stack">
               <div class="field">
                 <label for="title">Task title</label>
