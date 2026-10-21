@@ -244,3 +244,30 @@ main:has(.group-card) {
     justify-content: space-between;
   }
 }
+
+/* Remove / Leave button inside the members popup */
+.member-list li.has-action {
+  position: relative;
+  padding-right: 64px;
+}
+
+.member-remove-btn {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: none;
+  color: #dc2626;
+  padding: 4px 0;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.member-remove-btn:hover,
+.member-remove-btn:focus-visible {
+  color: #b91c1c;
+  text-decoration: underline;
+}

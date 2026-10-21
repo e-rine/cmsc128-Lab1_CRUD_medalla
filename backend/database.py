@@ -366,20 +366,29 @@ def get_members(list_id):
     return members
 
 def delete_list(list_id):
-    """Delete a group and everything attached to it (members, shared tasks).
- 
-    Any table with a list_id column (e.g. list_members, tasks) is cleared
-    first, then the list row itself is removed.
-    """
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     try:
-        tables = [r[0] for r in conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")]
-        for table in tables:
-            cols = [r[1] for r in conn.execute(f'PRAGMA table_info("{table}")')]
-            if "list_id" in cols:
-                conn.execute(f'DELETE FROM "{table}" WHERE list_id = ?', (list_id,))
+        conn.execute("DELETE FROM tasks WHERE list_id = ?", (list_id,))
+        conn.execute("DELETE FROM list_members WHERE list_id = ?", (list_id,))
         conn.execute("DELETE FROM lists WHERE id = ?", (list_id,))
         conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def remove_member(list_id, user_id):
+    conn = get_db_connection()
+    try:
+        cur = conn.execute(
+            """DELETE FROM list_members
+               WHERE list_id = ? AND user_id = ?
+                 AND user_id != (SELECT owner_id FROM lists WHERE id = ?)""",
+            (list_id, user_id, list_id),
+        )
+        conn.commit()
+        return cur.rowcount > 0
     finally:
         conn.close()

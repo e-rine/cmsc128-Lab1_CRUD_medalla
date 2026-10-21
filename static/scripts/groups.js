@@ -1,4 +1,4 @@
-// Scripts for the My Groups page (create-group and add-member modals)
+// Scripts for the My Groups page (create, add member, remove member / leave, delete modals)
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
   clearModalError(id);
@@ -108,6 +108,25 @@ function openDeleteModal(groupId, groupName) {
   document.getElementById('delete-modal').classList.add('open');
 }
 
+// Opens the confirm popup for removing a member, or for the current user leaving.
+// `btn` carries data-group-id, data-group-name, data-member-id, data-member-name, data-self.
+function openRemoveMemberModal(btn) {
+  var d = btn.dataset;
+  var isSelf = d.self === '1';
+
+  document.getElementById('remove-member-form').action =
+    '/groups/' + d.groupId + '/members/' + d.memberId + '/remove';
+  document.getElementById('remove-member-title').textContent = isSelf ? 'Leave group?' : 'Remove member?';
+  document.getElementById('remove-member-note').textContent = isSelf
+    ? 'You will lose access to "' + d.groupName + '" and its shared tasks. The owner can add you back later.'
+    : 'Remove ' + d.memberName + ' from "' + d.groupName + '"? They will lose access to its shared tasks.';
+  document.getElementById('remove-member-submit').textContent = isSelf ? 'Leave group' : 'Remove member';
+
+  closeModal('members-modal');          // in case it was opened from the members popup
+  clearModalError('remove-member-modal');
+  document.getElementById('remove-member-modal').classList.add('open');
+}
+
 // Click the dark backdrop or press Esc to close
 document.querySelectorAll('.gm-overlay').forEach(function (overlay) {
   overlay.addEventListener('click', function (e) {
@@ -129,3 +148,4 @@ if (topbarDate) {
 submitModalForm(document.querySelector('#create-modal form'), 'create-modal');
 submitModalForm(document.getElementById('add-member-form'), 'add-member-modal');
 submitModalForm(document.getElementById('delete-form'), 'delete-modal');
+submitModalForm(document.getElementById('remove-member-form'), 'remove-member-modal');

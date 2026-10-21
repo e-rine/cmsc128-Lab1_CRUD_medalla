@@ -32,7 +32,8 @@ from backend.database import (
     is_list_owner,
     add_member,
     get_members,
-    delete_list
+    delete_list,
+    remove_member,
 )
 from backend.mailer import send_reset_email
 
@@ -528,6 +529,30 @@ def delete_group(list_id):
     name = get_list_for_user(list_id, user_id)["name"]
     delete_list(list_id)
     return group_success(f'Group "{name}" was deleted.')
+
+
+@app.route("/groups/<int:list_id>/members/<int:member_id>/remove", methods=["POST"])
+@login_required
+def remove_group_member(list_id, member_id):
+    user_id = session["user_id"]
+
+    # Not a member -> pretend it doesn't exist
+    if get_list_for_user(list_id, user_id) is None:
+        abort(404)
+
+    # The owner can remove anyone; other members can only remove themselves (leave).
+    if not is_list_owner(list_id, user_id) and member_id != user_id:
+        return group_error("Only the owner can remove other members.")
+
+    if is_list_owner(list_id, member_id):
+        return group_error("The owner can't be removed. Delete the group instead.")
+
+    if not remove_member(list_id, member_id):
+        return group_error("That person isn't in this group.")
+
+    if member_id == user_id:
+        return group_success("You left the group.")
+    return group_success("Member removed.")
 
 
 @app.after_request
