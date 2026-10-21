@@ -364,3 +364,22 @@ def get_members(list_id):
     ).fetchall()
     conn.close()
     return members
+
+def delete_list(list_id):
+    """Delete a group and everything attached to it (members, shared tasks).
+ 
+    Any table with a list_id column (e.g. list_members, tasks) is cleared
+    first, then the list row itself is removed.
+    """
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        tables = [r[0] for r in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")]
+        for table in tables:
+            cols = [r[1] for r in conn.execute(f'PRAGMA table_info("{table}")')]
+            if "list_id" in cols:
+                conn.execute(f'DELETE FROM "{table}" WHERE list_id = ?', (list_id,))
+        conn.execute("DELETE FROM lists WHERE id = ?", (list_id,))
+        conn.commit()
+    finally:
+        conn.close()
