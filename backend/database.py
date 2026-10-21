@@ -80,32 +80,46 @@ def init_db():
     conn.close()
 
 
-# ---------- Tasks (every query is scoped to one user) ----------
+# ---------- Tasks ----------
+# A user can access a task if either:
+#   - it's personal (list_id IS NULL) 
+#   - it belongs to a list they are a member of.
+ACCESS_CLAUSE = """(
+    (tasks.list_id IS NULL AND tasks.user_id = ?)
+    OR tasks.list_id IN (SELECT list_id FROM list_members WHERE user_id = ?)
+)"""
 
-def get_all_tasks(user_id, sort_by="due_date", tag=None, priority=None):
+
+def get_all_tasks(user_id, sort_by="due_date", tag=None, priority=None, list_id=None):
     conn = get_db_connection()
-    query = "SELECT * FROM tasks"
-    conditions = ["user_id = ?"]
-    params = [user_id]
+    query = """SELECT tasks.*, users.name AS creator_name
+               FROM tasks LEFT JOIN users ON users.id = tasks.user_id"""
+
+    if list_id is None:
+        conditions = ["tasks.list_id IS NULL", "tasks.user_id = ?"]
+        params = [user_id]
+    else:
+        conditions = ["tasks.list_id = ?"]
+        params = [list_id]
 
     if tag:
-        conditions.append("category = ?")
+        conditions.append("tasks.category = ?")
         params.append(tag)
     if priority:
-        conditions.append("priority = ?")
+        conditions.append("tasks.priority = ?")
         params.append(priority)
 
     query += " WHERE " + " AND ".join(conditions)
 
-    # Figure out how to sort the results based on what was picked in the dropdown
+    # sort the results based on what was picked in the dropdown
     if sort_by == "date_added":
-        order_clause = "created_at DESC"
+        order_clause = "tasks.created_at DESC"
     elif sort_by == "priority":
-        order_clause = "CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 4 END ASC, deadline_date ASC"
+        order_clause = "CASE tasks.priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 4 END ASC, tasks.deadline_date ASC"
     elif sort_by == "tag":
-        order_clause = "category ASC, deadline_date ASC"
+        order_clause = "tasks.category ASC, tasks.deadline_date ASC"
     else:
-        order_clause = "deadline_date ASC, deadline_time ASC"
+        order_clause = "tasks.deadline_date ASC, tasks.deadline_time ASC"
 
     query += f" ORDER BY {order_clause}"
 
@@ -117,18 +131,20 @@ def get_all_tasks(user_id, sort_by="due_date", tag=None, priority=None):
 def get_task_by_id(task_id, user_id):
     conn = get_db_connection()
     task = conn.execute(
-        "SELECT * FROM tasks WHERE id = ? AND user_id = ?", (task_id, user_id)
+        f"SELECT * FROM tasks WHERE tasks.id = ? AND {ACCESS_CLAUSE}",
+        (task_id, user_id, user_id),
     ).fetchone()
     conn.close()
     return task
 
 
-def create_task(user_id, title, description, deadline_date, deadline_time, priority, category):
+def create_task(user_id, title, description, deadline_date, deadline_time, priority, category, list_id=None):
+    """list_id=None creates a personal task. The caller must check list membership first."""
     conn = get_db_connection()
     conn.execute(
-        """INSERT INTO tasks (user_id, title, description, deadline_date, deadline_time, priority, category)
-           VALUES (?, ?, ?, ?, ?, ?, ?)""",
-        (user_id, title, description, deadline_date, deadline_time, priority, category),
+        """INSERT INTO tasks (user_id, list_id, title, description, deadline_date, deadline_time, priority, category)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+        (user_id, list_id, title, description, deadline_date, deadline_time, priority, category),
     )
     conn.commit()
     conn.close()
@@ -137,10 +153,10 @@ def create_task(user_id, title, description, deadline_date, deadline_time, prior
 def update_task(task_id, user_id, title, description, deadline_date, deadline_time, priority, category):
     conn = get_db_connection()
     conn.execute(
-        """UPDATE tasks
+        f"""UPDATE tasks
            SET title = ?, description = ?, deadline_date = ?, deadline_time = ?, priority = ?, category = ?
-           WHERE id = ? AND user_id = ?""",
-        (title, description, deadline_date, deadline_time, priority, category, task_id, user_id),
+           WHERE tasks.id = ? AND {ACCESS_CLAUSE}""",
+        (title, description, deadline_date, deadline_time, priority, category, task_id, user_id, user_id),
     )
     conn.commit()
     conn.close()
@@ -149,8 +165,8 @@ def update_task(task_id, user_id, title, description, deadline_date, deadline_ti
 def toggle_task_complete(task_id, user_id):
     conn = get_db_connection()
     conn.execute(
-        "UPDATE tasks SET is_completed = NOT is_completed WHERE id = ? AND user_id = ?",
-        (task_id, user_id),
+        f"UPDATE tasks SET is_completed = NOT is_completed WHERE tasks.id = ? AND {ACCESS_CLAUSE}",
+        (task_id, user_id, user_id),
     )
     conn.commit()
     conn.close()
@@ -158,7 +174,10 @@ def toggle_task_complete(task_id, user_id):
 
 def delete_task(task_id, user_id):
     conn = get_db_connection()
-    conn.execute("DELETE FROM tasks WHERE id = ? AND user_id = ?", (task_id, user_id))
+    conn.execute(
+        f"DELETE FROM tasks WHERE tasks.id = ? AND {ACCESS_CLAUSE}",
+        (task_id, user_id, user_id),
+    )
     conn.commit()
     conn.close()
 
