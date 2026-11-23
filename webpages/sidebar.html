@@ -1,7 +1,7 @@
 <!-- Color theme (the user's chosen theme, set in My Quests) -->
 <link rel="stylesheet" href="{{ url_for('static', filename='styles/themes.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='styles/float.css') }}" />
-{% if theme_css %}<style>{{ theme_css|safe }}</style>{% endif %}
+<link rel="stylesheet" href="{{ url_for('theme_stylesheet') }}" />
 
 <!-- Sidebar -->
 <aside class="sidebar">

@@ -76,6 +76,16 @@ def inject_theme():
     return {"theme_css": game.theme_css(game.get_user_theme(user_id))}
 
 
+@app.route("/theme.css")
+def theme_stylesheet():
+    """The user's color theme as a real CSS file, so sidebar.html needs no template code inside <style>."""
+    user_id = session.get("user_id")
+    css = game.theme_css(game.get_user_theme(user_id)) if user_id else ""
+    response = app.response_class(css, mimetype="text/css")
+    response.headers["Cache-Control"] = "no-store"      # a newly picked theme shows up right away
+    return response
+
+
 # ---------- Helper ----------
 
 def redirect_back():
