@@ -2,7 +2,7 @@
 
 Put this file in backend/ next to database.py.
 
-It keeps everything in its OWN tables (xp_events, user_settings, gamification_meta),
+It keeps everything in its OWN tables (xp_events, gamification_meta) and the shared user_prefs table,
 so database.py does not need to change. It only reads the tasks table.
 
 How XP works
@@ -96,7 +96,20 @@ def init():
             UNIQUE (user_id, kind, ref)
         )
     """)
-    conn.execute("CREATE TABLE IF NOT EXISTS user_settings (user_id INTEGER PRIMARY KEY, theme TEXT NOT NULL DEFAULT 'indigo')")
+    # Per-user settings live in ONE key/value table (user_prefs, shared with preferences.py).
+    # The theme is stored there as key 'theme'. It used to have its own user_settings table:
+    # copy those rows over once, then drop the old table.
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS user_prefs ("
+        " user_id INTEGER NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL,"
+        " PRIMARY KEY (user_id, key))"
+    )
+    if conn.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'user_settings'").fetchone():
+        conn.execute(
+            "INSERT OR IGNORE INTO user_prefs (user_id, key, value) "
+            "SELECT user_id, 'theme', theme FROM user_settings"
+        )
+        conn.execute("DROP TABLE user_settings")
     conn.execute("CREATE TABLE IF NOT EXISTS gamification_meta (key TEXT PRIMARY KEY, value TEXT)")
 
     # One-time: tasks finished before this feature existed keep the XP they were worth.
@@ -347,11 +360,13 @@ def get_user_theme(user_id):
     """The user's chosen theme key, or the default if it's missing or still locked."""
     conn = get_db_connection()
     try:
-        row = conn.execute("SELECT theme FROM user_settings WHERE user_id = ?", (user_id,)).fetchone()
-        if row and row["theme"] in THEMES_BY_KEY:
+        row = conn.execute(
+            "SELECT value FROM user_prefs WHERE user_id = ? AND key = 'theme'", (user_id,)
+        ).fetchone()
+        if row and row["value"] in THEMES_BY_KEY:
             level = level_info(_total(conn, user_id))["level"]
-            if _is_unlocked(THEMES_BY_KEY[row["theme"]], level):
-                return row["theme"]
+            if _is_unlocked(THEMES_BY_KEY[row["value"]], level):
+                return row["value"]
         return DEFAULT_THEME
     finally:
         conn.close()
@@ -368,8 +383,8 @@ def set_user_theme(user_id, key):
         if not _is_unlocked(theme, level):
             return False, f"{theme['name']} is still locked. Reach level {theme['unlock_level']} to unlock it."
         conn.execute(
-            "INSERT INTO user_settings (user_id, theme) VALUES (?, ?) "
-            "ON CONFLICT(user_id) DO UPDATE SET theme = excluded.theme",
+            "INSERT INTO user_prefs (user_id, key, value) VALUES (?, 'theme', ?) "
+            "ON CONFLICT(user_id, key) DO UPDATE SET value = excluded.value",
             (user_id, key),
         )
         conn.commit()
