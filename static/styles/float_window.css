@@ -43,6 +43,51 @@ body {
   transition: width 0.3s;
 }
 
+/* filters */
+.filters {
+  padding: 10px 14px 8px;
+  background: var(--panel, #fff);
+  border-bottom: 1px solid var(--border, #e5e7ee);
+}
+.frow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ffield { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ffield span { font-size: 11px; font-weight: 500; color: var(--text-muted, #6b7280); }
+.ffield select {
+  width: 100%;
+  border: 1px solid var(--border, #e5e7ee);
+  border-radius: 8px;
+  padding: 5px 4px;
+  font: inherit;
+  font-size: 12.5px;
+  background: var(--panel, #fff);
+  color: var(--text, #1f2430);
+}
+.ffoot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; min-height: 20px; }
+.fclear {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary, #4f46e5);
+  cursor: pointer;
+}
+.fclear:hover { text-decoration: underline; }
+.fclear[hidden] { display: none; }
+.fhide {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted, #6b7280);
+  cursor: pointer;
+  user-select: none;
+}
+.fhide input { width: 14px; height: 14px; margin: 0; cursor: pointer; accent-color: var(--primary, #4f46e5); }
+
 /* task list */
 .count {
   padding: 10px 14px 2px;

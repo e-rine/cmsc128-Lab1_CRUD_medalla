@@ -1,11 +1,15 @@
 /* Floating task window (Document Picture-in-Picture).
  *
  * Click "Pop out tasks" in the sidebar and a small always-on-top window shows your
- * tasks. Tick one to complete it (it stays in the list, crossed out; untick to re-open it).
- * XP and quests count like on the normal page.
+ * tasks. Tick one to complete it (untick to re-open it). XP and quests count like on
+ * the normal page.
  *
  * The window's markup lives in the <template>s in sidebar.html and its styles in
  * static/styles/float_window.css. This file only wires them together.
+ *
+ * Ticking never redraws the list: the row is crossed out in place. With "Hide completed"
+ * on, it disappears half a second later. The list is only redrawn when something really
+ * changed (for example a task added or finished on the SideQuest page).
  *
  * Needs Chrome or Edge 116+. The window lives while this SideQuest tab stays open.
  */
@@ -19,6 +23,11 @@
   var toastTimer = null;
   var ui = {};           // elements inside the floating window, by data-ref
   var busy = false;      // true while a tick request is running
+  var filters = { sort: 'due_date', priority: '', tag: '' };   // chosen in the window (same options as the My Tasks page)
+  var lastSignature = '';  // which tasks (and done/open) are drawn; the list is redrawn only when this changes
+
+  var HIDE_DELAY_MS = 500;   // buffer before a ticked task disappears (only with "Hide completed" on)
+  var REFRESH_MS = 30000;    // how often the window quietly checks for changes
 
   // theme colors copied from the main page so the window matches your theme
   var THEME_VARS = ['--bg', '--panel', '--border', '--text', '--text-muted',
@@ -36,17 +45,18 @@
   });
 
   function openWindow() {
-    window.documentPictureInPicture.requestWindow({ width: 340, height: 500 }).then(function (win) {
+    window.documentPictureInPicture.requestWindow({ width: 340, height: 580 }).then(function (win) {
       pip = win;
       button.classList.add('on');
       build();
       refresh();
-      timer = setInterval(refresh, 30000);
-      pip.addEventListener('focus', refresh);
+      timer = setInterval(refresh, REFRESH_MS);
       pip.addEventListener('pagehide', function () {
         clearInterval(timer);
         pip = null;
         ui = {};
+        lastSignature = '';
+        filters = { sort: 'due_date', priority: '', tag: '' };
         button.classList.remove('on');
       });
     }).catch(function (err) {
@@ -80,7 +90,111 @@
 
     var content = doc.importNode(document.getElementById('float-window-template').content, true);
     ui = refs(content);
+    buildFilters(doc);
     doc.body.appendChild(content);
+  }
+
+  // ---------- filters (built here, so the <template> doesn't need to change) ----------
+
+  var SORT_OPTIONS = [['due_date', 'Due date'], ['date_added', 'Date added'], ['priority', 'Priority'], ['tag', 'Tag']];
+  var PRIORITY_OPTIONS = [['', 'All'], ['low', 'Low'], ['medium', 'Medium'], ['high', 'High']];
+  var CATEGORY_OPTIONS = [['', 'All'], ['school', 'School'], ['work', 'Work'], ['personal', 'Personal'],
+                          ['finance', 'Finance'], ['other', 'Other']];
+
+  function makeSelect(doc, label, key, options) {
+    var field = doc.createElement('label');
+    field.className = 'ffield';
+    var text = doc.createElement('span');
+    text.textContent = label;
+    var select = doc.createElement('select');
+    options.forEach(function (o) {
+      var opt = doc.createElement('option');
+      opt.value = o[0];
+      opt.textContent = o[1];
+      select.appendChild(opt);
+    });
+    select.value = filters[key];
+    select.addEventListener('change', function () {
+      filters[key] = select.value;
+      updateClear();
+      reload();
+    });
+    field.appendChild(text);
+    field.appendChild(select);
+    ui[key + 'Select'] = select;
+    return field;
+  }
+
+  function buildFilters(doc) {
+    var bar = doc.createElement('div');
+    bar.className = 'filters';
+
+    var grid = doc.createElement('div');
+    grid.className = 'frow';
+    grid.appendChild(makeSelect(doc, 'Sort by', 'sort', SORT_OPTIONS));
+    grid.appendChild(makeSelect(doc, 'Priority', 'priority', PRIORITY_OPTIONS));
+    grid.appendChild(makeSelect(doc, 'Category', 'tag', CATEGORY_OPTIONS));
+    bar.appendChild(grid);
+
+    var foot = doc.createElement('div');
+    foot.className = 'ffoot';
+
+    var clear = doc.createElement('button');
+    clear.type = 'button';
+    clear.className = 'fclear';
+    clear.textContent = 'Clear filters';
+    clear.hidden = true;
+    clear.addEventListener('click', function () {
+      filters = { sort: 'due_date', priority: '', tag: '' };
+      ui.sortSelect.value = 'due_date';
+      ui.prioritySelect.value = '';
+      ui.tagSelect.value = '';
+      updateClear();
+      reload();
+    });
+    ui.clear = clear;
+
+    var hide = doc.createElement('label');
+    hide.className = 'fhide';
+    var box = doc.createElement('input');
+    box.type = 'checkbox';
+    box.addEventListener('change', function () { setHideCompleted(box.checked); });
+    hide.appendChild(box);
+    hide.appendChild(doc.createTextNode('Hide completed tasks'));
+    ui.hide = box;
+
+    foot.appendChild(clear);
+    foot.appendChild(hide);
+    bar.appendChild(foot);
+
+    // goes right under the header, above the "x left" line
+    ui.count.parentNode.insertBefore(bar, ui.count);
+  }
+
+  function updateClear() {
+    ui.clear.hidden = !(filters.sort !== 'due_date' || filters.priority || filters.tag);
+  }
+
+  // redraw the list with the current filters
+  function reload() {
+    if (!pip) return;
+    api('/api/float-tasks' + query()).then(function (data) { render(data, true); }).catch(showError);
+  }
+
+  // "Hide completed" is the same saved setting as on the My Tasks page
+  function setHideCompleted(on) {
+    api('/api/float-tasks/hide-completed' + query({ hide: on ? '1' : '0' }), { method: 'POST' })
+      .then(function (data) { render(data, true); })
+      .catch(function (err) { ui.hide.checked = !on; showError(err); });
+  }
+
+  // ?sort=...&priority=...&tag=... for the server (empty ones are left out)
+  function query(extra) {
+    var params = new URLSearchParams();
+    Object.keys(filters).forEach(function (k) { if (filters[k]) params.set(k, filters[k]); });
+    if (extra) Object.keys(extra).forEach(function (k) { params.set(k, extra[k]); });
+    var text = params.toString();
+    return text ? '?' + text : '';
   }
 
   // ---------- data ----------
@@ -93,9 +207,10 @@
     });
   }
 
+  // quiet background check: redraws only if the tasks actually changed
   function refresh() {
     if (!pip || busy) return;
-    api('/api/float-tasks').then(render).catch(showError);
+    api('/api/float-tasks' + query()).then(function (data) { render(data, false); }).catch(showError);
   }
 
   function showError(err) {
@@ -104,6 +219,7 @@
       ? 'You were logged out. Log in again in the SideQuest tab.'
       : 'Could not reach SideQuest. Is the server running?';
     showMessage(msg, true);
+    lastSignature = '';
   }
 
   // one centered line in place of the task list
@@ -115,17 +231,32 @@
     ui.list.appendChild(note);
   }
 
-  function render(data) {
-    if (!pip) return;
+  function signature(tasks) {
+    return tasks.map(function (t) { return t.id + (t.done ? 'd' : 'o') + t.title; }).join('|');
+  }
+
+  // header numbers: cheap, updated every time without touching the list
+  function renderStats(data) {
     ui.level.textContent = 'Lv ' + data.level;
     ui.streak.textContent = '🔥 ' + data.streak;
     ui.quests.textContent = data.quests_done + '/' + data.quests_total + ' quests';
     ui.xp.style.width = Math.min(100, Math.round(data.xp_in_level / data.xp_per_level * 100)) + '%';
     var finished = data.tasks.length - data.open_count;
-    ui.count.textContent = data.open_count + ' left' + (finished ? ' \u00B7 ' + finished + ' done' : '');
+    ui.count.textContent = data.open_count + ' left' + (finished ? ' · ' + finished + ' done' : '');
+  }
+
+  // force = true draws the list even if nothing changed (first draw)
+  function render(data, force) {
+    if (!pip) return;
+    renderStats(data);
+    ui.hide.checked = !!data.hide_completed;
+
+    var sig = signature(data.tasks);
+    if (!force && sig === lastSignature) return;      // nothing changed: leave the list alone
+    lastSignature = sig;
 
     if (!data.tasks.length) {
-      showMessage('No tasks yet. Add some in SideQuest.', false);
+      showMessage(filters.priority || filters.tag ? 'No tasks match these filters.' : 'All clear! Nothing left to do.', false);
       return;
     }
 
@@ -135,6 +266,7 @@
       var row = pip.document.importNode(template.content, true);
       var parts = refs(row);
       var box = row.querySelector('input');
+      var rowEl = row.querySelector('.task');
 
       parts.title.textContent = task.title;          // textContent: titles are user input
       parts.due.textContent = task.due;
@@ -142,29 +274,43 @@
       box.checked = task.done;                       // finished tasks stay in the list, ticked
       parts.dot.classList.add(task.priority);
       parts.dot.title = task.priority + ' priority';
-
-      var rowEl = row.querySelector('.task');
       if (task.done) rowEl.classList.add('done');
-      box.addEventListener('change', function () { toggleTask(task.id, box); });
+
+      box.addEventListener('change', function () { toggleTask(task, rowEl, box); });
       ui.list.appendChild(row);
     });
   }
 
   // ---------- actions ----------
 
-  // ticking completes a task, unticking re-opens it
-  function toggleTask(id, box) {
+  // ticking completes a task, unticking re-opens it; the row changes in place (no redraw)
+  function toggleTask(task, rowEl, box) {
     var wasChecked = !box.checked;       // state before the click
     if (busy) { box.checked = wasChecked; return; }
     busy = true;
-    api('/api/float-tasks/' + id + '/toggle', { method: 'POST' }).then(function (data) {
+    api('/api/float-tasks/' + task.id + '/toggle' + query(), { method: 'POST' }).then(function (data) {
       busy = false;
-      if (data.ok) {
-        notify(data.messages);
-        render(data);
-      } else {
+      if (!data.ok) {
         box.checked = wasChecked;
         notify([data.error || 'Something went wrong.']);
+        return;
+      }
+      notify(data.messages);
+      renderStats(data);
+      ui.hide.checked = !!data.hide_completed;
+      lastSignature = signature(data.tasks);         // we already show this state, so a later check won't redraw
+
+      var nowDone = box.checked;
+      task.done = nowDone;
+      rowEl.classList.toggle('done', nowDone);
+
+      var hiddenByServer = !data.tasks.some(function (t) { return t.id === task.id; });
+      if (nowDone && hiddenByServer) {               // "Hide completed" is on: remove it after a short buffer
+        setTimeout(function () {
+          if (!pip || !box.checked) return;          // window closed, or it was unticked again in time
+          rowEl.remove();
+          if (!ui.list.querySelector('.task')) showMessage('All clear! Nothing left to do.', false);
+        }, HIDE_DELAY_MS);
       }
     }).catch(function (err) {
       busy = false;

@@ -83,7 +83,13 @@
             {% if selected_tag or selected_priority or sort_by != 'due_date' %}
             <a href="/my-tasks{% if current_list %}?list={{ current_list['id'] }}{% endif %}" class="btn btn-ghost filter-clear">Clear filters</a>
             {% endif %}
+            <label class="hide-done">
+              <input type="checkbox" name="hide" value="1" form="hide-done-form" {% if hide_done %}checked{% endif %} onchange="this.form.submit()" />
+              Hide completed tasks
+            </label>
           </form>
+          <!-- saves the "Hide completed" checkbox above (it points here with form="hide-done-form") -->
+          <form id="hide-done-form" method="POST" action="/preferences/hide-completed"></form>
         </section>
 
         <!-- Task list -->
@@ -182,7 +188,7 @@
             </form>
           </article>
           {% else %}
-          <div class="empty-state">No tasks yet.</div>
+          <div class="empty-state">{% if hide_done %}No open tasks. Completed tasks are hidden.{% else %}No tasks yet.{% endif %}</div>
           {% endfor %}
 
         </section>
