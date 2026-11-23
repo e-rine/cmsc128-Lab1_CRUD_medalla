@@ -126,12 +126,11 @@
               <span class="category-pill category-{{ task['category'] }}">{{ task['category']|capitalize }}</span>
             </div>
 
-            <div class="task-menu">
-              <button type="button" class="menu-trigger" data-id="{{ task['id'] }}" onclick="toggleMenu(this.dataset.id)">&#8942;</button>
-              <div class="menu-dropdown" id="menu-{{ task['id'] }}">
-                <button type="button" data-id="{{ task['id'] }}" onclick="toggleEditForm(this.dataset.id)">Edit</button>
-                <button type="button" class="danger-option" data-id="{{ task['id'] }}" data-title="{{ task['title'] }}" onclick="openDeleteModal(this.dataset.id, this.dataset.title)">Delete</button>
-              </div>
+            <div class="task-actions">
+              <button type="button" class="btn btn-ghost btn-small" data-id="{{ task['id'] }}" onclick="toggleEditForm(this.dataset.id)">Edit</button>
+              <button type="button" class="btn btn-ghost btn-small btn-delete" data-id="{{ task['id'] }}" data-title="{{ task['title'] }}" title="Delete task" aria-label="Delete task" onclick="openDeleteModal(this.dataset.id, this.dataset.title)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+              </button>
             </div>
 
             <!-- Edit form -->

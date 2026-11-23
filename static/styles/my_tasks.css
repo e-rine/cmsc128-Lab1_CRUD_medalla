@@ -352,7 +352,7 @@ a.sidebar-user.active {
 .task-table-header,
 .task-row {
   display: grid;
-  grid-template-columns: 32px 2fr 1.2fr 0.8fr 0.8fr 32px;
+  grid-template-columns: 32px 2fr 1.2fr 0.8fr 0.8fr 100px;
   align-items: center;
   gap: 12px;
   padding: 14px 18px;
@@ -405,45 +405,16 @@ a.sidebar-user.active {
 
 .category-pill { background: rgba(79, 70, 229, 0.1); color: var(--primary); }
 
-.task-menu { position: relative; }
-
-.menu-trigger {
-  background: none;
-  border: none;
-  font-size: 1.1rem;
-  cursor: pointer;
-  color: var(--text-muted);
-  padding: 4px 8px;
+.task-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
 }
 
-.menu-dropdown {
-  display: none;
-  position: fixed;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-  z-index: 500;
-  min-width: 120px;
-  overflow: hidden;
-}
+.btn-small { padding: 6px 12px; font-size: 0.78rem; }
 
-.menu-dropdown.open { display: block; }
-
-.menu-dropdown button {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 10px 14px;
-  border: none;
-  background: none;
-  font-size: 0.84rem;
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.menu-dropdown button:hover { background: var(--bg); }
-.menu-dropdown .danger-option { color: var(--danger); }
+.btn-delete { color: var(--danger); display: inline-flex; align-items: center; justify-content: center; padding: 6px 9px; }
+.btn-delete:hover { background: rgba(224, 72, 63, 0.1); border-color: var(--danger); }
 
 .edit-form {
   display: none;
@@ -591,6 +562,7 @@ a.sidebar-user.active {
     grid-template-columns: 1fr;
     row-gap: 6px;
   }
+  .task-actions { justify-content: flex-start; }
 }
 
 .task-added-by {

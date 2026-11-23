@@ -1,0 +1,114 @@
+/* Styles for the floating task window (loaded inside the pop-out window by float.js).
+   Colors come from the same variables as the main app, so your theme carries over. */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg, #f5f6fa);
+  color: var(--text, #1f2430);
+  font: 14px/1.35 "Inter", system-ui, sans-serif;
+}
+
+.wrap { display: flex; flex-direction: column; height: 100vh; }
+
+/* header */
+.head {
+  padding: 12px 14px 10px;
+  background: var(--panel, #fff);
+  border-bottom: 1px solid var(--border, #e5e7ee);
+}
+.row1 { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.brand { font-weight: 700; font-size: 15px; }
+.pills { display: flex; gap: 6px; font-size: 12px; font-weight: 600; }
+.pill {
+  background: var(--primary-soft, rgba(79, 70, 229, 0.1));
+  color: var(--primary, #4f46e5);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+.bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--border, #e5e7ee);
+  margin-top: 9px;
+  overflow: hidden;
+}
+.bar i {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--primary, #4f46e5);
+  border-radius: 999px;
+  transition: width 0.3s;
+}
+
+/* task list */
+.count {
+  padding: 10px 14px 2px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, #6b7280);
+}
+.list { flex: 1; overflow-y: auto; padding: 4px 10px 10px; }
+
+.task {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 8px;
+  border-radius: 8px;
+  transition: opacity 0.25s, background 0.15s;
+}
+.task:hover { background: var(--panel, #fff); }
+.task.done .t b { text-decoration: line-through; color: var(--text-muted, #6b7280); font-weight: 500; }
+.task.done .t small { text-decoration: line-through; }
+.task.done .dot { opacity: 0.35; }
+.task input {
+  width: 17px;
+  height: 17px;
+  margin: 2px 0 0;
+  cursor: pointer;
+  accent-color: var(--primary, #4f46e5);
+  flex-shrink: 0;
+}
+.t { min-width: 0; flex: 1; }
+.t b { display: block; font-weight: 600; font-size: 13.5px; overflow-wrap: anywhere; }
+.t small { font-size: 12px; color: var(--text-muted, #6b7280); }
+.t small.late { color: var(--danger, #e0483f); font-weight: 600; }
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+  background: var(--text-muted, #6b7280);
+}
+.dot.medium { background: #d99e00; }
+.dot.high { background: var(--danger, #e0483f); }
+
+.empty {
+  text-align: center;
+  color: var(--text-muted, #6b7280);
+  padding: 34px 10px;
+  font-size: 13px;
+}
+.empty.err { color: var(--danger, #e0483f); }
+
+/* message after completing a task */
+.toast {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  background: #1f2430;
+  color: #fff;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 13px;
+  display: none;
+}
+.toast.show { display: block; }

@@ -143,6 +143,14 @@ def homepage():
         "xp_per_level": progress["xp_per_level"],
     }
 
+    # ----- groups -----
+    groups = []
+    for lst in get_lists_for_user(user_id):
+        g = dict(lst)
+        g["is_owner"] = lst["owner_id"] == user_id
+        g["open_tasks"] = sum(1 for t in get_all_tasks(user_id, list_id=lst["id"]) if not t["is_completed"])
+        groups.append(g)
+
     today = datetime.now()
     return render_template(
         "homepage.html",
@@ -152,6 +160,7 @@ def homepage():
         stats=stats,
         level_info=level_info,
         due_soon=pending[:5],
+        groups=groups,
         quests=progress["quests"],
         quests_done=progress["quests_done"],
         quests_total=progress["quests_total"],
@@ -486,6 +495,78 @@ def toggle_task(task_id):
         for message in game.award_task_completion(session["user_id"], task):
             flash(message, "success")
     return redirect_back()
+
+# ---------- Floating window (Picture-in-Picture) ----------
+# float.js opens a small always-on-top window and talks to these JSON routes.
+
+def short_deadline(task):
+    """'Today · 3:30 PM', 'Tomorrow · 9:00 AM' or 'Sep 10 · 3:30 PM' (Windows-safe, no %-d)."""
+    dt = datetime.strptime(f"{task['deadline_date']} {task['deadline_time']}", "%Y-%m-%d %H:%M")
+    hour_12 = dt.hour % 12 or 12
+    clock = f"{hour_12}:{dt.strftime('%M')} {dt.strftime('%p')}"
+    days_away = (dt.date() - datetime.now().date()).days
+    if days_away == 0:
+        day = "Today"
+    elif days_away == 1:
+        day = "Tomorrow"
+    elif days_away == -1:
+        day = "Yesterday"
+    else:
+        day = f"{dt.strftime('%b')} {dt.day}"
+    return f"{day} \u00b7 {clock}"
+
+
+FLOAT_MAX_DONE = 10      # how many finished tasks the floating window keeps showing under the open ones
+
+
+def float_payload(user_id):
+    """Open personal tasks (soonest deadline first), then the latest finished ones, plus the small stats."""
+    tasks = get_all_tasks(user_id)
+    open_tasks = [t for t in tasks if not t["is_completed"]]
+    done_tasks = sorted((t for t in tasks if t["is_completed"]), key=lambda t: t["id"], reverse=True)[:FLOAT_MAX_DONE]
+    progress = game.get_progress(user_id)
+    return {
+        "tasks": [
+            {
+                "id": t["id"],
+                "title": t["title"],
+                "due": short_deadline(t),
+                "overdue": bool(is_overdue(t)),
+                "priority": t["priority"],
+                "done": bool(t["is_completed"]),
+            }
+            for t in open_tasks + done_tasks
+        ],
+        "open_count": len(open_tasks),
+        "level": progress["level"],
+        "xp_in_level": progress["xp_in_level"],
+        "xp_per_level": progress["xp_per_level"],
+        "streak": progress["streak"],
+        "quests_done": progress["quests_done"],
+        "quests_total": progress["quests_total"],
+    }
+
+
+@app.route("/api/float-tasks")
+@login_required
+def float_tasks():
+    return jsonify(float_payload(session["user_id"]))
+
+
+@app.route("/api/float-tasks/<int:task_id>/toggle", methods=["POST"])
+@login_required
+def float_toggle_task(task_id):
+    user_id = session["user_id"]
+    if get_task_by_id(task_id, user_id) is None:
+        return jsonify({"ok": False, "error": "That task no longer exists."}), 404
+
+    toggle_task_complete(task_id, user_id)
+    messages = []
+    task = get_task_by_id(task_id, user_id)
+    if task is not None and task["is_completed"]:
+        messages = game.award_task_completion(user_id, task)   # XP, quests, level-ups
+    return jsonify({"ok": True, "messages": messages, **float_payload(user_id)})
+
 
 # ---------- My Quests ----------
 
