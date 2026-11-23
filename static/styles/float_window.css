@@ -143,17 +143,92 @@ body {
 }
 .empty.err { color: var(--danger, #e0483f); }
 
-/* message after completing a task */
+/* "+ Add task" bar under the list */
+.addbar {
+  padding: 10px 12px;
+  background: var(--panel, #fff);
+  border-top: 1px solid var(--border, #e5e7ee);
+}
+.addbtn {
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 12px;
+  background: var(--primary, #4f46e5);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+.addbtn:hover { background: var(--primary-dark, #4338ca); }
+
+/* add-task popup inside the window */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 17, 26, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  z-index: 10;
+}
+.overlay[hidden] { display: none; }
+.addform {
+  width: 100%;
+  background: var(--panel, #fff);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+.addform h3 { margin: 0; font-size: 15px; }
+.frow2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ffield input {
+  width: 100%;
+  border: 1px solid var(--border, #e5e7ee);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 13px;
+  background: var(--panel, #fff);
+  color: var(--text, #1f2430);
+}
+.ferr { color: var(--danger, #e0483f); font-size: 12px; font-weight: 600; }
+.ferr[hidden] { display: none; }
+.addactions { display: flex; justify-content: flex-end; gap: 8px; }
+.gbtn, .pbtn {
+  border-radius: 8px;
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.gbtn { border: 1px solid var(--border, #e5e7ee); background: transparent; color: var(--text-muted, #6b7280); }
+.gbtn:hover { background: var(--bg, #f5f6fa); }
+.pbtn { border: none; background: var(--primary, #4f46e5); color: #fff; }
+.pbtn:hover { background: var(--primary-dark, #4338ca); }
+.pbtn:disabled { opacity: 0.6; cursor: default; }
+
+/* message after adding / completing a task: same look as the flash messages on the main page
+   (soft green with green text; red for errors). The background is solid so the list doesn't show through. */
 .toast {
   position: fixed;
   left: 12px;
   right: 12px;
-  bottom: 12px;
-  background: #1f2430;
-  color: #fff;
-  border-radius: 10px;
-  padding: 9px 12px;
+  bottom: 64px;
+  z-index: 20;
+  background: #e1f2ec;
+  color: var(--success, #1a9e6a);
+  border-radius: 8px;
+  padding: 10px 14px;
   font-size: 13px;
+  font-weight: 500;
   display: none;
 }
+.toast.err { background: #fbe7e5; color: var(--danger, #e0483f); }
 .toast.show { display: block; }

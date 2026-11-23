@@ -592,6 +592,43 @@ def float_tasks():
     return jsonify(float_payload(session["user_id"], **float_filters()))
 
 
+FLOAT_PRIORITIES = {"low", "medium", "high"}
+FLOAT_CATEGORIES = {"school", "work", "personal", "finance", "other"}
+
+
+@app.route("/api/float-tasks/add", methods=["POST"])
+@login_required
+def float_add_task():
+    """Adds a personal task from the floating window and answers with the refreshed list."""
+    user_id = session["user_id"]
+    title = request.form.get("title", "").strip()
+    deadline_date = request.form.get("deadline_date", "").strip()
+    deadline_time = request.form.get("deadline_time", "").strip()
+    priority = request.form.get("priority", "medium")
+    category = request.form.get("category", "other")
+
+    error = None
+    if not title:
+        error = "Please enter a task title."
+    elif len(title) > 200:
+        error = "The title is too long (200 characters max)."
+    elif priority not in FLOAT_PRIORITIES or category not in FLOAT_CATEGORIES:
+        error = "Pick a priority and a category."
+    else:
+        try:
+            datetime.strptime(deadline_date, "%Y-%m-%d")
+            datetime.strptime(deadline_time, "%H:%M")
+        except ValueError:
+            error = "Please set a valid deadline date and time."
+    if error:
+        return jsonify({"ok": False, "error": error}), 400
+
+    create_task(user_id, title, "", deadline_date, deadline_time, priority, category)
+    messages = ["Task added successfully."]      # same wording as the My Tasks page
+    messages += game.sync_quests(user_id)          # e.g. "Add 1 new task today"
+    return jsonify({"ok": True, "messages": messages, **float_payload(user_id, **float_filters())})
+
+
 @app.route("/api/float-tasks/hide-completed", methods=["POST"])
 @login_required
 def float_hide_completed():

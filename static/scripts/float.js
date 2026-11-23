@@ -92,6 +92,109 @@
     ui = refs(content);
     buildFilters(doc);
     doc.body.appendChild(content);
+    buildAddTask(doc);
+  }
+
+  // ---------- add a task (button at the bottom + a small popup form) ----------
+
+  var ADD_FORM_HTML =
+    '<h3>Add a task</h3>' +
+    '<label class="ffield"><span>Task title</span>' +
+      '<input name="title" type="text" maxlength="200" placeholder="What needs doing?" required></label>' +
+    '<div class="frow2">' +
+      '<label class="ffield"><span>Date</span><input name="deadline_date" type="date" required></label>' +
+      '<label class="ffield"><span>Time</span><input name="deadline_time" type="time" required></label>' +
+    '</div>' +
+    '<div class="frow2">' +
+      '<label class="ffield"><span>Priority</span><select name="priority">' +
+        '<option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option>' +
+      '</select></label>' +
+      '<label class="ffield"><span>Category</span><select name="category">' +
+        '<option value="school">School</option><option value="work">Work</option><option value="personal">Personal</option>' +
+        '<option value="finance">Finance</option><option value="other" selected>Other</option>' +
+      '</select></label>' +
+    '</div>' +
+    '<div class="ferr" hidden></div>' +
+    '<div class="addactions">' +
+      '<button type="button" class="gbtn" data-act="cancel">Cancel</button>' +
+      '<button type="submit" class="pbtn">Add task</button>' +
+    '</div>';
+
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+
+  function buildAddTask(doc) {
+    // the button, pinned under the list
+    var bar = doc.createElement('div');
+    bar.className = 'addbar';
+    var open = doc.createElement('button');
+    open.type = 'button';
+    open.className = 'addbtn';
+    open.textContent = '+ Add task';
+    open.addEventListener('click', openAdd);
+    bar.appendChild(open);
+    ui.list.parentNode.appendChild(bar);
+
+    // the popup form (hidden until the button is clicked)
+    var overlay = doc.createElement('div');
+    overlay.className = 'overlay';
+    overlay.hidden = true;
+    var form = doc.createElement('form');
+    form.className = 'addform';
+    form.noValidate = false;
+    form.innerHTML = ADD_FORM_HTML;          // fixed text only, nothing from the user
+    overlay.appendChild(form);
+    doc.body.appendChild(overlay);
+
+    ui.addOverlay = overlay;
+    ui.addForm = form;
+    ui.addError = form.querySelector('.ferr');
+
+    form.querySelector('[data-act="cancel"]').addEventListener('click', closeAdd);
+    overlay.addEventListener('mousedown', function (e) { if (e.target === overlay) closeAdd(); });
+    doc.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAdd(); });
+    form.addEventListener('submit', function (e) { e.preventDefault(); submitAdd(); });
+  }
+
+  function openAdd() {
+    if (!pip) return;
+    var form = ui.addForm;
+    var now = new Date();
+    form.reset();
+    // same defaults as the quick add on the Homepage: today, 5:00 PM, Medium, Other
+    form.elements.deadline_date.value = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+    form.elements.deadline_time.value = '17:00';
+    ui.addError.hidden = true;
+    ui.addOverlay.hidden = false;
+    form.elements.title.focus();
+  }
+
+  function closeAdd() {
+    if (ui.addOverlay) ui.addOverlay.hidden = true;
+  }
+
+  function submitAdd() {
+    if (busy) return;
+    busy = true;
+    var submit = ui.addForm.querySelector('.pbtn');
+    submit.disabled = true;
+    api('/api/float-tasks/add' + query(), { method: 'POST', body: new FormData(ui.addForm) }).then(function (data) {
+      busy = false;
+      submit.disabled = false;
+      if (!pip) return;
+      if (!data.ok) {
+        ui.addError.textContent = data.error || 'Something went wrong.';
+        ui.addError.hidden = false;
+        return;
+      }
+      closeAdd();
+      notify(data.messages);
+      render(data, true);
+    }).catch(function (err) {
+      busy = false;
+      submit.disabled = false;
+      closeAdd();
+      showError(err);
+    });
   }
 
   // ---------- filters (built here, so the <template> doesn't need to change) ----------
@@ -292,7 +395,7 @@
       busy = false;
       if (!data.ok) {
         box.checked = wasChecked;
-        notify([data.error || 'Something went wrong.']);
+        notify([data.error || 'Something went wrong.'], true);
         return;
       }
       notify(data.messages);
@@ -318,9 +421,10 @@
     });
   }
 
-  function notify(messages) {
+  function notify(messages, isError) {
     if (!pip || !messages || !messages.length) return;
     ui.toast.textContent = messages.join('  •  ');
+    ui.toast.classList.toggle('err', !!isError);
     ui.toast.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function () { if (pip) ui.toast.classList.remove('show'); }, 4000);
