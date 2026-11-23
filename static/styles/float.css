@@ -1,3 +1,10 @@
+/* "Pop out tasks" sits under the nav links, separated by a thin line */
+.sidebar-tools {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
 /* "Pop out tasks" button in the sidebar */
 .sidebar-float {
   display: flex;
@@ -17,6 +24,7 @@
 .sidebar-float.on { background: var(--primary-soft, rgba(79, 70, 229, 0.1)); }
 
 /* the floating window only exists on desktop browsers */
-@media (max-width: 860px) {
+@media (max-width: 560px) {
+  .sidebar-tools,
   .sidebar-float { display: none; }
 }

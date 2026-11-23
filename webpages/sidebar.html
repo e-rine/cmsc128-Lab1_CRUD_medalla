@@ -6,9 +6,7 @@
 <!-- Sidebar -->
 <aside class="sidebar">
   <div class="brand">
-    <span class="brand-mark">
-      <img class="brand-logo" src="{{ url_for('static', filename='images/logo.png') }}" alt="SideQuest logo" />
-    </span>
+    <span class="brand-mark" role="img" aria-label="SideQuest logo"></span>
     SideQuest
   </div>
 
@@ -27,12 +25,17 @@
     </a>
   </nav>
 
+  {% if session.get('user_id') %}
+  <div class="sidebar-tools">
+    <button type="button" class="sidebar-float" id="float-open" data-css="{{ url_for('static', filename='styles/float_window.css') }}" title="Open your tasks in a small window that stays on top of other tabs and apps">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="12" width="8" height="6" rx="1" fill="currentColor"/></svg>
+      <span>Pop out tasks</span>
+    </button>
+  </div>
+  {% endif %}
+
   <div class="sidebar-account">
     {% if session.get('user_id') %}
-      <button type="button" class="sidebar-float" id="float-open" data-css="{{ url_for('static', filename='styles/float_window.css') }}" title="Open your tasks in a small window that stays on top of other tabs and apps">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="12" width="8" height="6" rx="1" fill="currentColor"/></svg>
-        <span>Pop out tasks</span>
-      </button>
       <a href="/profile" class="sidebar-user{% if request.path.startswith('/profile') %} active{% endif %}" title="View profile">
         <span class="sidebar-avatar">{{ session.get('user_name', '?')[:1]|upper }}</span>
         <span class="sidebar-userinfo">

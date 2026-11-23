@@ -48,30 +48,22 @@ h1, h2, h3, .brand { font-family: "Sora", sans-serif; }
   font-size: 1.15rem;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0;
   margin-bottom: 32px;
 }
 
 .brand span { color: var(--primary); }
 
 .brand-mark {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
-  border-radius: 10px;
-  background: var(--primary);   /* follows the chosen theme */
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
-}
-
-/* Logo image inside the purple brand square (file: static/images/logo.png) */
-.brand-logo {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+  margin-right: -6px;     /* pulls the text closer to the logo */
+  /* The logo is used as a stencil: only its shape is kept and it is filled with the
+     theme color, so it recolors itself whenever the theme changes. */
+  background: var(--primary);
+  -webkit-mask: url("../images/logo.png") center / contain no-repeat;
+  mask: url("../images/logo.png") center / contain no-repeat;
 }
 
 .sidebar-nav {
@@ -561,9 +553,33 @@ a.sidebar-user.active {
 }
 
 /* ---------- Responsive ---------- */
+/* Medium windows: the sidebar stays on the left (just a bit slimmer) and the task table stacks */
 @media (max-width: 860px) {
+  .sidebar { width: 210px; padding: 24px 14px 12px; }
+  .content { padding: 20px; }
+  .task-table-header { display: none; }
+  .task-row {
+    grid-template-columns: 1fr;
+    row-gap: 6px;
+  }
+  .task-actions { justify-content: flex-start; }
+}
+
+/* Phone-sized windows only: the sidebar becomes a bar across the top */
+@media (max-width: 560px) {
   .app-shell { flex-direction: column; }
-  .sidebar { width: 100%; flex-direction: row; align-items: center; position: static; height: auto; padding: 24px 20px; }
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    position: static;
+    height: auto;
+    padding: 16px 20px;
+  }
+  .brand { margin-bottom: 0; }
+  .sidebar-nav { flex-direction: row; flex-wrap: wrap; gap: 2px; }
   .sidebar-foot { display: none; }
   .sidebar-account {
     margin-top: 0;
@@ -574,13 +590,6 @@ a.sidebar-user.active {
     align-items: center;
   }
   .sidebar-userinfo { display: none; }
-  .content { padding: 20px; }
-  .task-table-header { display: none; }
-  .task-row {
-    grid-template-columns: 1fr;
-    row-gap: 6px;
-  }
-  .task-actions { justify-content: flex-start; }
 }
 
 .task-added-by {
