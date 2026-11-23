@@ -66,6 +66,13 @@ h1, h2, h3, .brand { font-family: "Sora", sans-serif; }
   font-size: 0.8rem;
 }
 
+/* Logo image inside the purple brand square (file: static/images/logo.png) */
+.brand-logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
 .sidebar-nav {
   display: flex;
   flex-direction: column;

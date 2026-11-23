@@ -36,6 +36,7 @@ from backend.database import (
     remove_member,
 )
 from backend.mailer import send_reset_email
+from backend import gamification as game
 
 app = Flask(__name__, template_folder="webpages")
 # Set SECRET_KEY in your .env file; the fallback is only for local development.
@@ -43,6 +44,7 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key-change-this-later"
 
 # Create/upgrade the tables whenever the app loads (python app.py, flask run, ...)
 init_db()
+game.init()          # XP, quests and theme tables (separate from database.py)
 print("Using database file:", os.path.abspath(DB_PATH))
 
 
@@ -61,6 +63,15 @@ def format_deadline(task):
 def is_overdue(task):
     dt = datetime.strptime(f"{task['deadline_date']} {task['deadline_time']}", "%Y-%m-%d %H:%M")
     return dt < datetime.now() and not task["is_completed"]
+
+
+@app.context_processor
+def inject_theme():
+    """Makes the logged-in user's color theme available to sidebar.html on every page."""
+    user_id = session.get("user_id")
+    if not user_id:
+        return {}
+    return {"theme_css": game.theme_css(game.get_user_theme(user_id))}
 
 
 # ---------- Helper ----------
@@ -89,10 +100,63 @@ def index():
     return render_template("index.html")
 
 
+# ---------- Homepage (dashboard) ----------
+
+def time_greeting():
+    hour = datetime.now().hour
+    if hour < 12:
+        return "Good morning"
+    if hour < 18:
+        return "Good afternoon"
+    return "Good evening"
+
+
 @app.route("/homepage")
 @login_required
 def homepage():
-    return render_template("homepage.html")
+    user_id = session["user_id"]
+
+    # pay out any daily quest that is already finished (e.g. "add a task")
+    for message in game.sync_quests(user_id):
+        flash(message, "success")
+
+    # ----- personal tasks -> stats, due soon -----
+    tasks = get_all_tasks(user_id)                      # sorted by due date
+    completed = [t for t in tasks if t["is_completed"]]
+    pending = [t for t in tasks if not t["is_completed"]]
+    total = len(tasks)
+
+    stats = {
+        "total": total,
+        "completed": len(completed),
+        "pending": len(pending),
+        "overdue": sum(1 for t in pending if is_overdue(t)),
+        "percent": round(len(completed) / total * 100) if total else 0,
+    }
+
+    # ----- XP, level, daily quests, streak -----
+    progress = game.get_progress(user_id)
+    level_info = {
+        "level": progress["level"],
+        "xp": progress["total_xp"],
+        "xp_in_level": progress["xp_in_level"],
+        "xp_per_level": progress["xp_per_level"],
+    }
+
+    today = datetime.now()
+    return render_template(
+        "homepage.html",
+        greeting=time_greeting(),
+        today_label=f"{today.strftime('%A')}, {today.strftime('%B')} {today.day}",
+        today_iso=today.strftime("%Y-%m-%d"),
+        stats=stats,
+        level_info=level_info,
+        due_soon=pending[:5],
+        quests=progress["quests"],
+        quests_done=progress["quests_done"],
+        quests_total=progress["quests_total"],
+        streak=progress["streak"],
+    )
 
 
 @app.route("/login-signup", methods=["GET", "POST"])
@@ -368,6 +432,8 @@ def add_task():
     create_task(session["user_id"], title, description, deadline_date, deadline_time,
                 priority, category, list_id=list_id)
     flash("Task added successfully.", "success")
+    for message in game.sync_quests(session["user_id"]):     # e.g. "Add 1 new task today"
+        flash(message, "success")
     return redirect_back()
 
 
@@ -413,7 +479,67 @@ def toggle_task(task_id):
         return redirect_back()
 
     toggle_task_complete(task_id, session["user_id"])
+
+    # Ticked as done -> XP (once per task, daily cap), quest progress, level-ups
+    task = get_task_by_id(task_id, session["user_id"])
+    if task is not None and task["is_completed"]:
+        for message in game.award_task_completion(session["user_id"], task):
+            flash(message, "success")
     return redirect_back()
+
+# ---------- My Quests ----------
+
+def build_achievements(personal_tasks, groups, progress):
+    """Badges worked out from existing data. Nothing extra is stored for them."""
+    completed = [t for t in personal_tasks if t["is_completed"]]
+    pending = [t for t in personal_tasks if not t["is_completed"]]
+    high_done = sum(1 for t in completed if t["priority"] == "high")
+    overdue = sum(1 for t in pending if is_overdue(t))
+    owned = sum(1 for g in groups if g["is_owner"])
+    return [
+        {"name": "First Quest", "desc": "Complete your first task", "done": len(completed) >= 1},
+        {"name": "Getting Going", "desc": "Complete 5 tasks", "done": len(completed) >= 5},
+        {"name": "Task Master", "desc": "Complete 25 tasks", "done": len(completed) >= 25},
+        {"name": "High Roller", "desc": "Complete 3 high-priority tasks", "done": high_done >= 3},
+        {"name": "Clean Slate", "desc": "Have tasks and none overdue", "done": bool(personal_tasks) and overdue == 0},
+        {"name": "Team Player", "desc": "Join a group", "done": len(groups) >= 1},
+        {"name": "Group Founder", "desc": "Create your own group", "done": owned >= 1},
+        {"name": "Quest Starter", "desc": "Finish a daily quest", "done": progress["quests_claimed_total"] >= 1},
+        {"name": "On Fire", "desc": "Reach a 3-day streak", "done": progress["best_streak"] >= 3},
+        {"name": "Week Warrior", "desc": "Reach a 7-day streak", "done": progress["best_streak"] >= 7},
+    ]
+
+
+@app.route("/quests")
+@login_required
+def quests():
+    user_id = session["user_id"]
+
+    for message in game.sync_quests(user_id):
+        flash(message, "success")
+
+    progress = game.get_progress(user_id)
+    groups = [{"is_owner": lst["owner_id"] == user_id} for lst in get_lists_for_user(user_id)]
+    achievements = build_achievements(get_all_tasks(user_id), groups, progress)
+
+    return render_template(
+        "quests.html",
+        progress=progress,
+        themes=game.list_themes(progress["level"], game.get_user_theme(user_id)),
+        next_theme=game.next_theme_unlock(progress["level"]),
+        all_unlocked=game.UNLOCK_ALL_THEMES,
+        achievements=achievements,
+        achievements_unlocked=sum(1 for x in achievements if x["done"]),
+    )
+
+
+@app.route("/theme", methods=["POST"])
+@login_required
+def choose_theme():
+    ok, message = game.set_user_theme(session["user_id"], request.form.get("theme", ""))
+    flash(message, "success" if ok else "error")
+    return redirect(url_for("quests") + "#themes")
+
 
 @app.route("/groups")
 @login_required

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title> SideQuest | My Quests </title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/my_tasks.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/homepage.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/quests.css') }}" />
+</head>
+<body>
+
+  <div class="app-shell">
+
+    {% include 'sidebar.html' %}
+
+    <div class="content">
+      <main class="home">
+
+        <div class="page-heading">
+          <h1>My Quests</h1>
+          <p>Finish daily quests to earn XP, keep your streak alive and unlock color themes.</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for category, message in messages %}
+            <div class="flash-message flash-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endwith %}
+
+        <!-- Level / streak / today's XP -->
+        <section class="q-stats">
+          <div class="stat-card">
+            <span class="stat-label">Level</span>
+            <span class="stat-value">{{ progress.level }}</span>
+            <div class="bar"><div class="bar-fill" style="width: {{ progress.xp_in_level }}%;"></div></div>
+            <span class="stat-note">{{ progress.xp_in_level }} / {{ progress.xp_per_level }} XP &middot; {{ progress.total_xp }} XP total</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Streak</span>
+            <span class="stat-value{% if progress.streak %} streak-on{% endif %}">{{ progress.streak }} day{{ '' if progress.streak == 1 else 's' }}</span>
+            <span class="stat-note">Best: {{ progress.best_streak }} day{{ '' if progress.best_streak == 1 else 's' }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Task XP today</span>
+            <span class="stat-value">{{ progress.task_xp_today }}<small> / {{ progress.daily_cap }}</small></span>
+            <div class="bar"><div class="bar-fill" style="width: {{ (progress.task_xp_today / progress.daily_cap * 100)|round|int }}%;"></div></div>
+            <span class="stat-note">Daily cap stops XP farming. Quest XP is on top.</span>
+          </div>
+        </section>
+
+        <!-- Daily quests -->
+        <section class="home-card" id="daily-quests">
+          <div class="card-head">
+            <h2>Today's quests</h2>
+            <span class="percent">{{ progress.quests_done }}/{{ progress.quests_total }}</span>
+          </div>
+
+          {% for q in progress.quests %}
+          <div class="quest-row{% if q.done %} done{% endif %}">
+            <span class="quest-mark">{{ '✓' if q.done else '' }}</span>
+            <div class="quest-main">
+              <span class="quest-text">{{ q.text }}</span>
+              <div class="bar"><div class="bar-fill" style="width: {{ q.pct }}%;"></div></div>
+            </div>
+            <div class="quest-side">
+              <span class="quest-progress">{{ q.progress }}/{{ q.goal }}</span>
+              <span class="quest-reward">{{ 'Claimed' if q.done else '+' ~ progress.quest_xp ~ ' XP' }}</span>
+            </div>
+          </div>
+          {% endfor %}
+
+          <p class="card-note">
+            {% if progress.quests_done == progress.quests_total %}
+              All done for today. Come back tomorrow for 3 new quests.
+            {% else %}
+              Finish all {{ progress.quests_total }} today to extend your streak. New quests every day.
+            {% endif %}
+          </p>
+        </section>
+
+        <!-- Themes -->
+        <section class="home-card" id="themes">
+          <div class="card-head">
+            <h2>Color themes</h2>
+            <span class="card-note-inline">
+              {% if all_unlocked %}All themes are unlocked
+              {% elif next_theme %}Next theme at level {{ next_theme.unlock_level }}
+              {% else %}Every theme unlocked{% endif %}
+            </span>
+          </div>
+
+          <div class="theme-grid">
+            {% for t in themes %}
+            <div class="theme-card{% if t.active %} active{% endif %}{% if not t.unlocked %} locked{% endif %}">
+              <div class="swatches">
+                {% for color in t.swatches %}<span style="background: {{ color }};"></span>{% endfor %}
+              </div>
+              <strong>{{ t.name }}</strong>
+              {% if t.active %}
+                <span class="theme-status">In use</span>
+              {% elif t.unlocked %}
+                <form action="/theme" method="POST">
+                  <input type="hidden" name="theme" value="{{ t.key }}" />
+                  <button type="submit" class="btn btn-ghost theme-btn">Use theme</button>
+                </form>
+              {% else %}
+                <span class="theme-status">Unlocks at level {{ t.unlock_level }}</span>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </section>
+
+        <!-- Achievements (moved here from the homepage) -->
+        <section class="home-card" id="achievements">
+          <div class="card-head">
+            <h2>Achievements</h2>
+            <span class="percent">{{ achievements_unlocked }}/{{ achievements|length }}</span>
+          </div>
+          <ul class="badge-list">
+            {% for a in achievements %}
+            <li class="badge{% if a.done %} unlocked{% endif %}">
+              <span class="badge-mark">{{ '✓' if a.done else '' }}</span>
+              <span class="badge-text">
+                <strong>{{ a.name }}</strong>
+                <span>{{ a.desc }}</span>
+              </span>
+            </li>
+            {% endfor %}
+          </ul>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+</body>
+</html>

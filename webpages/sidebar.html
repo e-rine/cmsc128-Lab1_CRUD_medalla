@@ -1,16 +1,23 @@
+<!-- Color theme (the user's chosen theme, set in My Quests) -->
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/themes.css') }}" />
+{% if theme_css %}<style>{{ theme_css|safe }}</style>{% endif %}
+
 <!-- Sidebar -->
 <aside class="sidebar">
   <div class="brand">
-    <span class="brand-mark">TD</span>
+    <span class="brand-mark"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="SideQuest logo" class="brand-logo" /></span>
     SideQuest
   </div>
 
   <nav class="sidebar-nav">
-    <a href="/homepage" class="{% if request.path == '/' %}active{% endif %}">
+    <a href="/homepage" class="{% if request.path == '/homepage' %}active{% endif %}">
       <span>Homepage</span>
     </a>
     <a href="/my-tasks" class="{% if request.path == '/my-tasks' and not request.args.get('list') %}active{% endif %}">
       <span>My Tasks</span>
+    </a>
+    <a href="/quests" class="{% if request.path.startswith('/quests') %}active{% endif %}">
+      <span>My Quests</span>
     </a>
     <a href="/groups" class="{% if request.path.startswith('/groups') or (request.path == '/my-tasks' and request.args.get('list')) %}active{% endif %}">
       <span>My Groups</span>

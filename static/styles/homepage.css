@@ -1,0 +1,298 @@
+/* Homepage / dashboard.
+   Load AFTER my_tasks.css: it reuses that file's variables, sidebar, .btn,
+   .field, .flash-message, .task-check, .priority-pill and .deadline-text styles. */
+
+.text-danger { color: var(--danger); }
+.text-success { color: var(--success); }
+
+.home { max-width: 1100px; }
+
+/* ---------- Hero ---------- */
+.home-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.home-hero-text { flex: 1; min-width: 0; }
+
+.home-date {
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.home-hero h1 {
+  font-size: 2rem;
+  margin: 4px 0 8px;
+}
+
+.home-hero p {
+  margin: 0 0 18px;
+  color: var(--text-muted);
+}
+
+.home-cta { display: inline-block; text-decoration: none; }
+
+/* ---------- Level card ---------- */
+.level-card {
+  width: calc((100% - 48px) / 4);   /* same width as one stat card below
+                                       (4 columns, three 16px gaps) */
+  flex-shrink: 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+}
+
+.level-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.level-badge {
+  background: var(--primary);
+  color: #fff;
+  font-family: "Sora", sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+
+.level-xp { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
+.level-note { font-size: 0.78rem; color: var(--text-muted); }
+
+/* ---------- Progress bar (shared) ---------- */
+.bar {
+  height: 10px;
+  background: var(--bg);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+/* ---------- Stats ---------- */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stat-label {
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.stat-value {
+  font-family: "Sora", sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+/* ---------- Two columns ---------- */
+.home-columns {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.home-col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+
+.home-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+}
+
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 14px;
+}
+
+.card-head h2 { font-size: 1rem; margin: 0; }
+
+.card-link {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.card-link:hover { text-decoration: underline; }
+
+.percent {
+  font-family: "Sora", sans-serif;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.card-note { margin: 10px 0 0; font-size: 0.84rem; color: var(--text-muted); }
+
+.empty-note { margin: 0; font-size: 0.88rem; color: var(--text-muted); }
+.empty-note a { color: var(--primary); font-weight: 600; text-decoration: none; }
+
+/* ---------- Due soon ---------- */
+.due-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.due-row:last-of-type { border-bottom: none; }
+
+.due-row form { display: flex; }
+
+.due-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.due-title {
+  font-weight: 600;
+  font-size: 0.92rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Quick add ---------- */
+.quick-add {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr 1fr 1fr;
+  gap: 12px;
+  align-items: end;
+}
+
+.quick-add .quick-title { grid-column: 1 / -1; }
+.quick-add .field input,
+.quick-add .field select { width: 100%; min-width: 0; }
+.quick-submit { grid-column: 1 / -1; justify-self: end; height: 38px; padding: 0 28px; }
+
+/* ---------- Groups ---------- */
+.group-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  margin: 0 -12px;
+  border-radius: 8px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.group-row:hover { background: var(--bg); }
+
+.group-name { font-weight: 600; font-size: 0.92rem; }
+
+.group-meta { font-size: 0.8rem; color: var(--text-muted); }
+
+.group-meta em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--primary);
+  margin-left: 6px;
+}
+
+/* ---------- Daily quests summary ---------- */
+.quest-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.streak-pill {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text-muted);
+}
+
+.streak-pill.on { background: rgba(234, 88, 12, 0.12); color: #c2410c; }
+
+.quest-count { font-size: 0.8rem; color: var(--text-muted); }
+
+.mini-quests {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mini-quest {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.86rem;
+}
+
+.mini-mark {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px dashed var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.mini-quest.done .mini-mark { border: none; background: var(--success); color: #fff; }
+.mini-quest.done .mini-text { color: var(--text-muted); text-decoration: line-through; }
+.mini-text { flex: 1; min-width: 0; }
+.mini-progress { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 960px) {
+  .home-columns { grid-template-columns: 1fr; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .home-hero { flex-direction: column; }
+  .level-card { width: 100%; }
+}
+
+@media (max-width: 560px) {
+  .quick-add { grid-template-columns: 1fr 1fr; }
+}
+.level-card .streak-pill { align-self: flex-start; }
