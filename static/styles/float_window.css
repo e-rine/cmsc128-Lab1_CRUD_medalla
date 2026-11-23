@@ -62,8 +62,44 @@ body {
   background: var(--panel, #fff);
   color: var(--text, #1f2430);
 }
-.ffoot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; min-height: 20px; }
+.filters[hidden] { display: none; }
+.toolrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px 0;
+}
+.toolrow .count { flex: 1; min-width: 0; padding: 0; }
+.ftoggle {
+  position: relative;
+  display: flex;
+  margin-left: auto;   /* pushes the arrow to the right */
+  align-items: center;
+  gap: 2px;
+  padding: 3px 6px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted, #6b7280);
+  cursor: pointer;
+}
+.ftoggle:hover { color: var(--primary, #4f46e5); background: var(--primary-soft, rgba(79, 70, 229, 0.1)); }
+.ftoggle.on::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary, #4f46e5);
+}
 .fclear {
+  display: block;
+  margin: 8px 0 0 auto;
   border: none;
   background: none;
   padding: 0;
@@ -76,7 +112,7 @@ body {
 .fclear:hover { text-decoration: underline; }
 .fclear[hidden] { display: none; }
 .fhide {
-  margin-left: auto;
+  margin-top: 10px;   /* breathing room under the filter boxes */
   display: flex;
   align-items: center;
   gap: 6px;

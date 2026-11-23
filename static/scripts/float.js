@@ -23,6 +23,12 @@
   var toastTimer = null;
   var ui = {};           // elements inside the floating window, by data-ref
   var busy = false;      // true while a tick request is running
+  var HIDE_FILTERS_KEY = 'sidequest-float-filters-hidden';
+  var filtersHidden = true;        // true = the filter boxes are collapsed (the default; remembered in this browser)
+  try {
+    var savedHidden = localStorage.getItem(HIDE_FILTERS_KEY);
+    if (savedHidden !== null) filtersHidden = savedHidden === '1';
+  } catch (e) {}
   var filters = { sort: 'due_date', priority: '', tag: '' };   // chosen in the window (same options as the My Tasks page)
   var lastSignature = '';  // which tasks (and done/open) are drawn; the list is redrawn only when this changes
 
@@ -229,6 +235,7 @@
   }
 
   function buildFilters(doc) {
+    // the filter boxes (collapsible panel, just above the "x left" row)
     var bar = doc.createElement('div');
     bar.className = 'filters';
 
@@ -238,9 +245,6 @@
     grid.appendChild(makeSelect(doc, 'Priority', 'priority', PRIORITY_OPTIONS));
     grid.appendChild(makeSelect(doc, 'Category', 'tag', CATEGORY_OPTIONS));
     bar.appendChild(grid);
-
-    var foot = doc.createElement('div');
-    foot.className = 'ffoot';
 
     var clear = doc.createElement('button');
     clear.type = 'button';
@@ -256,6 +260,12 @@
       reload();
     });
     ui.clear = clear;
+    bar.appendChild(clear);
+    ui.filterBody = bar;
+
+    // one slim row: "9 left" on the left, "Filters" arrow on the right
+    var row = doc.createElement('div');
+    row.className = 'toolrow';
 
     var hide = doc.createElement('label');
     hide.className = 'fhide';
@@ -265,17 +275,42 @@
     hide.appendChild(box);
     hide.appendChild(doc.createTextNode('Hide completed tasks'));
     ui.hide = box;
+    bar.insertBefore(hide, clear);      // lives inside the filters panel, on the left, above "Clear filters"
 
-    foot.appendChild(clear);
-    foot.appendChild(hide);
-    bar.appendChild(foot);
+    var toggle = doc.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'ftoggle';
+    toggle.addEventListener('click', function () {
+      filtersHidden = !filtersHidden;
+      try { localStorage.setItem(HIDE_FILTERS_KEY, filtersHidden ? '1' : '0'); } catch (e) {}
+      updateToggle();
+    });
+    ui.toggle = toggle;
 
-    // goes right under the header, above the "x left" line
     ui.count.parentNode.insertBefore(bar, ui.count);
+    ui.count.parentNode.insertBefore(row, ui.count);
+    row.appendChild(ui.count);          // moves the "x left" text into the row
+    row.appendChild(toggle);
+    updateToggle();
   }
 
   function updateClear() {
     ui.clear.hidden = !(filters.sort !== 'due_date' || filters.priority || filters.tag);
+    updateToggle();
+  }
+
+  // shows or hides the filter controls; the button is just an up / down arrow
+  var ARROW_UP = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 15 12 9 18 15"/></svg>';
+  var ARROW_DOWN = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>';
+
+  function updateToggle() {
+    if (!ui.toggle) return;
+    ui.filterBody.hidden = filtersHidden;
+    var active = filters.sort !== 'due_date' || filters.priority || filters.tag;
+    ui.toggle.innerHTML = '<span>Filters</span>' + (filtersHidden ? ARROW_DOWN : ARROW_UP);   // fixed markup, nothing from the user
+    ui.toggle.title = filtersHidden ? 'Show filters' + (active ? ' (some are on)' : '') : 'Hide filters';
+    ui.toggle.setAttribute('aria-label', ui.toggle.title);
+    ui.toggle.classList.toggle('on', !!(filtersHidden && active));   // little dot: filters are hidden but still applied
   }
 
   // redraw the list with the current filters
