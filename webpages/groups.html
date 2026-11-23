@@ -58,7 +58,7 @@
               <li{% if can_remove %} class="has-action"{% endif %}>
                 <strong>{{ m['name'] }}</strong>
                 <span>{{ m['email'] }}</span>
-                {% if m['is_owner'] %}<em>(owner)</em>{% endif %}
+                {% if m['is_owner'] %}<em>Owner</em>{% endif %}
                 {% if can_remove %}
                 <button type="button" class="member-remove-btn"
                         data-group-id="{{ g['id'] }}" data-group-name="{{ g['name'] }}"
@@ -174,6 +174,9 @@
           <label for="member-email">Email</label>
           <input type="email" id="member-email" name="email" placeholder="friend@example.com" required />
         </div>
+        <!-- extra email boxes are added here by the script at the bottom of the page -->
+        <div id="add-member-extra"></div>
+        <button type="button" class="btn btn-ghost" id="add-member-another">+ Add another</button>
         <div class="gm-actions">
           <button type="button" class="btn btn-ghost" onclick="closeModal('add-member-modal')">Cancel</button>
           <button type="submit" class="btn btn-primary">Add member</button>
@@ -223,5 +226,45 @@
   </div>
 
   <script src="{{ url_for('static', filename='scripts/groups.js') }}"></script>
+  <script>
+    // "Add member" modal: lets you type several emails (all inputs are named "email")
+    (function () {
+      var modal = document.getElementById('add-member-modal');
+      var extra = document.getElementById('add-member-extra');
+      var addBtn = document.getElementById('add-member-another');
+      if (!modal || !extra || !addBtn) return;
+
+      addBtn.addEventListener('click', function () {
+        var row = document.createElement('div');
+        row.className = 'gm-member-row';
+
+        var field = document.createElement('div');
+        field.className = 'field';
+        var input = document.createElement('input');
+        input.type = 'email';
+        input.name = 'email';
+        input.placeholder = 'friend@example.com';
+        field.appendChild(input);
+
+        var remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'gm-remove';
+        remove.title = 'Remove this email';
+        remove.setAttribute('aria-label', 'Remove this email');
+        remove.textContent = '\u00d7';
+        remove.addEventListener('click', function () { row.remove(); });
+
+        row.appendChild(field);
+        row.appendChild(remove);
+        extra.appendChild(row);
+        input.focus();
+      });
+
+      // start fresh every time the modal is closed
+      new MutationObserver(function () {
+        if (!modal.classList.contains('open')) extra.textContent = '';
+      }).observe(modal, { attributes: true, attributeFilter: ['class'] });
+    })();
+  </script>
 </body>
 </html>

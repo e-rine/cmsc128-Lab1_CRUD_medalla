@@ -37,6 +37,7 @@ from backend.database import (
 )
 from backend.mailer import send_reset_email
 from backend import gamification as game
+from backend import preferences as prefs
 
 app = Flask(__name__, template_folder="webpages")
 # Set SECRET_KEY in your .env file; the fallback is only for local development.
@@ -45,6 +46,7 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key-change-this-later"
 # Create/upgrade the tables whenever the app loads (python app.py, flask run, ...)
 init_db()
 game.init()          # XP, quests and theme tables (separate from database.py)
+prefs.init()         # small per-user settings, e.g. "hide completed tasks"
 print("Using database file:", os.path.abspath(DB_PATH))
 
 
@@ -313,9 +315,16 @@ def my_tasks():
 
     tasks = get_all_tasks(session["user_id"], sort_by=sort_by, tag=tag or None,
                           priority=priority or None, list_id=list_id)
+
+    # saved setting ("Hide completed"): applies on every page load until it is switched off
+    hide_done = prefs.get_bool(session["user_id"], "hide_completed")
+    if hide_done:
+        tasks = [t for t in tasks if not t["is_completed"]]
+
     return render_template(
         "my_tasks.html",
         tasks=tasks,
+        hide_done=hide_done,
         current_list=current_list,
         sort_by=sort_by,
         selected_tag=tag,
@@ -469,6 +478,14 @@ def edit_task(task_id):
     return redirect_back()
 
 
+@app.route("/preferences/hide-completed", methods=["POST"])
+@login_required
+def set_hide_completed():
+    """Saves the 'Hide completed' checkbox (unchecked boxes send nothing, so missing = off)."""
+    prefs.set_bool(session["user_id"], "hide_completed", request.form.get("hide") == "1")
+    return redirect_back()
+
+
 @app.route("/delete-task/<int:task_id>", methods=["DELETE"])
 @login_required
 def delete_task_route(task_id):
@@ -519,13 +536,25 @@ def short_deadline(task):
 FLOAT_MAX_DONE = 10      # how many finished tasks the floating window keeps showing under the open ones
 
 
-def float_payload(user_id):
-    """Open personal tasks (soonest deadline first), then the latest finished ones, plus the small stats."""
-    tasks = get_all_tasks(user_id)
+def float_filters():
+    """Sort / priority / category chosen in the floating window (sent as ?sort=&priority=&tag=)."""
+    return {
+        "sort_by": request.args.get("sort", "due_date"),
+        "priority": request.args.get("priority", "") or None,
+        "tag": request.args.get("tag", "") or None,
+    }
+
+
+def float_payload(user_id, sort_by="due_date", priority=None, tag=None):
+    """Open personal tasks (in the chosen order), then the latest finished ones, plus the small stats."""
+    tasks = get_all_tasks(user_id, sort_by=sort_by, tag=tag, priority=priority)
     open_tasks = [t for t in tasks if not t["is_completed"]]
     done_tasks = sorted((t for t in tasks if t["is_completed"]), key=lambda t: t["id"], reverse=True)[:FLOAT_MAX_DONE]
+    if prefs.get_bool(user_id, "hide_completed"):      # same setting as the My Tasks page
+        done_tasks = []
     progress = game.get_progress(user_id)
     return {
+        "hide_completed": prefs.get_bool(user_id, "hide_completed"),
         "tasks": [
             {
                 "id": t["id"],
@@ -550,7 +579,16 @@ def float_payload(user_id):
 @app.route("/api/float-tasks")
 @login_required
 def float_tasks():
-    return jsonify(float_payload(session["user_id"]))
+    return jsonify(float_payload(session["user_id"], **float_filters()))
+
+
+@app.route("/api/float-tasks/hide-completed", methods=["POST"])
+@login_required
+def float_hide_completed():
+    """Same saved setting as the checkbox on the My Tasks page, but answers with JSON."""
+    user_id = session["user_id"]
+    prefs.set_bool(user_id, "hide_completed", request.args.get("hide") == "1")
+    return jsonify({"ok": True, **float_payload(user_id, **float_filters())})
 
 
 @app.route("/api/float-tasks/<int:task_id>/toggle", methods=["POST"])
@@ -565,7 +603,7 @@ def float_toggle_task(task_id):
     task = get_task_by_id(task_id, user_id)
     if task is not None and task["is_completed"]:
         messages = game.award_task_completion(user_id, task)   # XP, quests, level-ups
-    return jsonify({"ok": True, "messages": messages, **float_payload(user_id)})
+    return jsonify({"ok": True, "messages": messages, **float_payload(user_id, **float_filters())})
 
 
 # ---------- My Quests ----------
@@ -710,16 +748,48 @@ def add_group_member(list_id):
     if not is_list_owner(list_id, user_id):
         return group_error("Only the owner can add members.")
 
-    email = request.form.get("email", "").strip().lower()
-    target = get_user_by_email(email) if email else None
+    # One or more emails (the modal can have several boxes, all named "email").
+    # Like creating a group, it's all or nothing: if any email has a problem, nobody is added.
+    current_ids = {m["id"] for m in get_members(list_id)}
+    to_add = []        # accounts to add, no duplicates
+    invalid = []       # badly written emails, or emails with no account
+    already = []       # names of people already in the group
+    own_email = False
+    seen = set()
+    for raw in request.form.getlist("email"):
+        email = raw.strip().lower()
+        if not email or email in seen:
+            continue
+        seen.add(email)
 
-    if target is None:
-        return group_error("No account found with that email.")
-    if target["id"] == user_id:
+        if not EMAIL_PATTERN.match(email):
+            invalid.append(email)
+            continue
+        target = get_user_by_email(email)
+        if target is None:
+            invalid.append(email)
+        elif target["id"] == user_id:
+            own_email = True
+        elif target["id"] in current_ids:
+            already.append(target["name"])
+        else:
+            to_add.append(target)
+
+    if not seen:
+        return group_error("Enter at least one email.")
+    if own_email:
         return group_error("You're already in this group.")
-    if not add_member(list_id, target["id"]):
-        return group_error(f"{target['name']} is already in this group.")
-    return group_success(f"{target['name']} was added to the group.")
+    if invalid:
+        return group_error("Invalid or unregistered email: " + ", ".join(invalid))
+    if already:
+        return group_error(", ".join(already) + (" is" if len(already) == 1 else " are") + " already in this group.")
+
+    for target in to_add:
+        add_member(list_id, target["id"])
+
+    if len(to_add) == 1:
+        return group_success(f"{to_add[0]['name']} was added to the group.")
+    return group_success(f"{len(to_add)} members were added to the group.")
 
 
 @app.route("/groups/<int:list_id>/delete", methods=["POST"])

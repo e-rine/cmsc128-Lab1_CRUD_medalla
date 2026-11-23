@@ -65,6 +65,14 @@
   color: #dc2626;
 }
 
+#add-member-extra {
+  margin-top: 8px;
+}
+
+#add-member-extra .gm-member-row {
+  margin-bottom: 8px;
+}
+
 .gm-actions {
   display: flex;
   justify-content: flex-end;
@@ -270,4 +278,73 @@ main:has(.group-card) {
 .member-remove-btn:focus-visible {
   color: #b91c1c;
   text-decoration: underline;
+}
+
+/* ---------- Members popup: cleaner rows ---------- */
+.gm-box .member-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.gm-box .member-list li,
+.gm-box .member-list li.has-action {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 2px;
+  padding: 12px 4px;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+}
+
+.gm-box .member-list li:last-child {
+  border-bottom: none;
+}
+
+.gm-box .member-list strong {
+  grid-column: 1;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.gm-box .member-list li span {
+  grid-column: 1;
+  font-size: 0.82rem;
+  color: var(--text-muted, #6b7280);
+  overflow-wrap: anywhere;
+}
+
+/* "Owner" badge */
+.gm-box .member-list em {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  font-style: normal;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(79, 70, 229, 0.1);
+  color: var(--primary, #4f46e5);
+}
+
+/* Remove / Leave: a small outlined button instead of loose red text */
+.gm-box .member-remove-btn {
+  position: static;
+  transform: none;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  padding: 5px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.gm-box .member-remove-btn:hover,
+.gm-box .member-remove-btn:focus-visible {
+  background: #fef2f2;
+  text-decoration: none;
 }
