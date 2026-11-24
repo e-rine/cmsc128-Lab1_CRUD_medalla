@@ -85,6 +85,8 @@ class _Cursor:
 
 
 _pool = None
+_last_used = {}         
+_CHECK_AFTER_SECONDS = 20
 
 
 class _PgConnection:
@@ -111,6 +113,10 @@ class _PgConnection:
             raw.rollback()               # drop any unfinished transaction before reusing the connection
         except Exception:
             broken = True
+        if broken:
+            _last_used.pop(id(raw), None)
+        else:
+            _last_used[id(raw)] = time.monotonic()
         _pool.putconn(raw, close=broken)
 
 
@@ -122,18 +128,21 @@ def _pg_connect():
             keepalives=1, keepalives_idle=30, keepalives_interval=10, keepalives_count=3,
         )
     last_error = None
-    for _ in range(3):                   # a pooled connection may have been closed by the server while idle
+    for _ in range(3):
         raw = _pool.getconn()
         try:
-            cur = raw.cursor()
-            if APP_TIMEZONE:
-                cur.execute("SELECT set_config('TimeZone', %s, false)", (APP_TIMEZONE,))
-            else:
-                cur.execute("SELECT 1")
-            raw.commit()
+            seen = _last_used.get(id(raw))
+            if seen is None or time.monotonic() - seen > _CHECK_AFTER_SECONDS:
+                cur = raw.cursor()
+                if APP_TIMEZONE:
+                    cur.execute("SELECT set_config('TimeZone', %s, false)", (APP_TIMEZONE,))
+                else:
+                    cur.execute("SELECT 1")
+                raw.commit()
             return _PgConnection(raw)
         except Exception as error:
             last_error = error
+            _last_used.pop(id(raw), None)
             _pool.putconn(raw, close=True)
     raise last_error
 
