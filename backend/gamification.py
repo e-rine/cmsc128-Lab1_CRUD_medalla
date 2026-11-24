@@ -13,10 +13,9 @@ How XP works
   * Each daily quest you finish pays QUEST_XP on top. Quest XP is not part of the cap.
   * Levels: every XP_PER_LEVEL XP is one level.
 """
-import sqlite3
 from datetime import date, datetime, timedelta
 
-from backend.database import get_db_connection
+from backend.database import get_db_connection, table_columns, table_exists
 
 # ---------- Settings you can tweak ----------
 PRIORITY_XP = {"low": 10, "medium": 20, "high": 30}
@@ -104,7 +103,7 @@ def init():
         " user_id INTEGER NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL,"
         " PRIMARY KEY (user_id, key))"
     )
-    if conn.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'user_settings'").fetchone():
+    if table_exists(conn, "user_settings"):
         conn.execute(
             "INSERT OR IGNORE INTO user_prefs (user_id, key, value) "
             "SELECT user_id, 'theme', theme FROM user_settings"
@@ -114,7 +113,7 @@ def init():
 
     # One-time: tasks finished before this feature existed keep the XP they were worth.
     if not conn.execute("SELECT 1 FROM gamification_meta WHERE key = 'xp_backfill'").fetchone():
-        columns = [r["name"] for r in conn.execute("PRAGMA table_info(tasks)")]
+        columns = table_columns(conn, "tasks")
         where = "is_completed = 1 AND user_id IS NOT NULL"
         if "list_id" in columns:
             where += " AND list_id IS NULL"          # personal tasks only

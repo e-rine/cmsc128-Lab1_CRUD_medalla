@@ -1,14 +1,170 @@
-import sqlite3
 import os
+import re
+import sqlite3
+import time
 
+# ---------------------------------------------------------------------------
+# Two modes:
+#   * DATABASE_URL is set (Render / Neon)  -> Postgres
+#   * DATABASE_URL is not set (your PC)    -> SQLite file todolist.db, exactly like before
+# ---------------------------------------------------------------------------
+DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
+if DATABASE_URL.startswith("postgres://"):          # some hosts still use the old prefix
+    DATABASE_URL = "postgresql://" + DATABASE_URL[len("postgres://"):]
+USE_POSTGRES = DATABASE_URL.startswith("postgresql://")
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "..", "todolist.db")
 
+# Optional: e.g. APP_TIMEZONE=Asia/Manila so "today" rolls over at your midnight, not the server's (UTC).
+APP_TIMEZONE = os.environ.get("APP_TIMEZONE", "").strip()
+if APP_TIMEZONE:
+    os.environ["TZ"] = APP_TIMEZONE
+    if hasattr(time, "tzset"):
+        time.tzset()
+
+if USE_POSTGRES:
+    import psycopg2
+    from psycopg2.pool import ThreadedConnectionPool
+    IntegrityError = psycopg2.IntegrityError
+else:
+    IntegrityError = sqlite3.IntegrityError
+
+
+# ---------- Postgres adapter ----------
+# Makes a Postgres connection behave like the sqlite3 one the rest of the code expects:
+# conn.execute(sql, params), "?" placeholders, rows readable by name AND by position.
+
+def _to_pg(sql):
+    """Translate the few SQLite-only bits of our SQL into Postgres."""
+    sql = sql.replace("INTEGER PRIMARY KEY AUTOINCREMENT", "SERIAL PRIMARY KEY")
+    sql = sql.replace("datetime('now', 'localtime')", "to_char(now(), 'YYYY-MM-DD HH24:MI:SS')")
+    if re.match(r"\s*INSERT OR IGNORE INTO", sql, re.I):
+        sql = re.sub(r"INSERT OR IGNORE INTO", "INSERT INTO", sql, count=1, flags=re.I)
+        sql = sql.rstrip().rstrip(";") + " ON CONFLICT DO NOTHING"
+    return sql.replace("?", "%s")
+
+
+class _Row(tuple):
+    def __new__(cls, values, names):
+        row = super().__new__(cls, values)
+        row._names = names
+        return row
+
+    def __getitem__(self, key):
+        if isinstance(key, str):
+            try:
+                return tuple.__getitem__(self, self._names.index(key))
+            except ValueError:
+                raise KeyError(key)
+        return tuple.__getitem__(self, key)
+
+    def keys(self):
+        return list(self._names)
+
+
+class _Cursor:
+    def __init__(self, cur):
+        self._cur = cur
+
+    @property
+    def rowcount(self):
+        return self._cur.rowcount
+
+    def _wrap(self, row):
+        return _Row(row, [d[0] for d in self._cur.description])
+
+    def fetchone(self):
+        row = self._cur.fetchone()
+        return None if row is None else self._wrap(row)
+
+    def fetchall(self):
+        return [self._wrap(r) for r in self._cur.fetchall()]
+
+    def __iter__(self):
+        return iter(self.fetchall())
+
+
+_pool = None
+
+
+class _PgConnection:
+    def __init__(self, raw):
+        self._raw = raw
+
+    def execute(self, sql, params=()):
+        cur = self._raw.cursor()
+        cur.execute(_to_pg(sql), tuple(params) if params else None)
+        return _Cursor(cur)
+
+    def commit(self):
+        self._raw.commit()
+
+    def rollback(self):
+        self._raw.rollback()
+
+    def close(self):
+        if self._raw is None:
+            return
+        raw, self._raw = self._raw, None
+        broken = False
+        try:
+            raw.rollback()               # drop any unfinished transaction before reusing the connection
+        except Exception:
+            broken = True
+        _pool.putconn(raw, close=broken)
+
+
+def _pg_connect():
+    global _pool
+    if _pool is None:
+        _pool = ThreadedConnectionPool(
+            1, 5, dsn=DATABASE_URL, connect_timeout=15,
+            keepalives=1, keepalives_idle=30, keepalives_interval=10, keepalives_count=3,
+        )
+    last_error = None
+    for _ in range(3):                   # a pooled connection may have been closed by the server while idle
+        raw = _pool.getconn()
+        try:
+            cur = raw.cursor()
+            if APP_TIMEZONE:
+                cur.execute("SELECT set_config('TimeZone', %s, false)", (APP_TIMEZONE,))
+            else:
+                cur.execute("SELECT 1")
+            raw.commit()
+            return _PgConnection(raw)
+        except Exception as error:
+            last_error = error
+            _pool.putconn(raw, close=True)
+    raise last_error
+
 
 def get_db_connection():
+    if USE_POSTGRES:
+        return _pg_connect()
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def table_columns(conn, table):
+    if USE_POSTGRES:
+        rows = conn.execute(
+            "SELECT column_name FROM information_schema.columns "
+            "WHERE table_name = ? AND table_schema = current_schema()", (table,)
+        ).fetchall()
+        return [r[0] for r in rows]
+    return [row["name"] for row in conn.execute(f"PRAGMA table_info({table})")]
+
+
+def table_exists(conn, table):
+    if USE_POSTGRES:
+        return conn.execute(
+            "SELECT 1 FROM information_schema.tables WHERE table_name = ? AND table_schema = current_schema()",
+            (table,),
+        ).fetchone() is not None
+    return conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (table,)
+    ).fetchone() is not None
 
 
 def init_db():
@@ -30,7 +186,7 @@ def init_db():
     """)
 
     # Older databases were created before tasks belonged to users / lists: add the columns.
-    columns = [row["name"] for row in conn.execute("PRAGMA table_info(tasks)")]
+    columns = table_columns(conn, "tasks")
     if "user_id" not in columns:
         conn.execute("ALTER TABLE tasks ADD COLUMN user_id INTEGER")
     if "list_id" not in columns:
@@ -165,7 +321,7 @@ def update_task(task_id, user_id, title, description, deadline_date, deadline_ti
 def toggle_task_complete(task_id, user_id):
     conn = get_db_connection()
     conn.execute(
-        f"UPDATE tasks SET is_completed = NOT is_completed WHERE tasks.id = ? AND {ACCESS_CLAUSE}",
+        f"UPDATE tasks SET is_completed = 1 - is_completed WHERE tasks.id = ? AND {ACCESS_CLAUSE}",
         (task_id, user_id, user_id),
     )
     conn.commit()
@@ -194,7 +350,7 @@ def create_user(name, email, password_hash):
         )
         conn.commit()
         return True
-    except sqlite3.IntegrityError:
+    except IntegrityError:
         return False
     finally:
         conn.close()
@@ -228,7 +384,7 @@ def update_user_email(user_id, email):
         conn.execute("UPDATE users SET email = ? WHERE id = ?", (email, user_id))
         conn.commit()
         return True
-    except sqlite3.IntegrityError:
+    except IntegrityError:
         return False
     finally:
         conn.close()
@@ -280,10 +436,14 @@ def create_list(owner_id, name):
     # Creates a list and adds the owner as its first member. Returns the new list id
     conn = get_db_connection()
     try:
-        cursor = conn.execute(
-            "INSERT INTO lists (name, owner_id) VALUES (?, ?)", (name, owner_id)
-        )
-        list_id = cursor.lastrowid
+        if USE_POSTGRES:
+            list_id = conn.execute(
+                "INSERT INTO lists (name, owner_id) VALUES (?, ?) RETURNING id", (name, owner_id)
+            ).fetchone()[0]
+        else:
+            list_id = conn.execute(
+                "INSERT INTO lists (name, owner_id) VALUES (?, ?)", (name, owner_id)
+            ).lastrowid
         conn.execute(
             "INSERT INTO list_members (list_id, user_id) VALUES (?, ?)", (list_id, owner_id)
         )
@@ -304,7 +464,7 @@ def get_lists_for_user(user_id):
            JOIN list_members ON list_members.list_id = lists.id
            JOIN users AS owner ON owner.id = lists.owner_id
            WHERE list_members.user_id = ?
-           ORDER BY lists.name COLLATE NOCASE ASC""",
+           ORDER BY LOWER(lists.name) ASC""",
         (user_id,),
     ).fetchall()
     conn.close()
@@ -343,7 +503,7 @@ def add_member(list_id, user_id):
         )
         conn.commit()
         return True
-    except sqlite3.IntegrityError:
+    except IntegrityError:
         return False
     finally:
         conn.close()
@@ -359,7 +519,7 @@ def get_members(list_id):
            JOIN users ON users.id = list_members.user_id
            JOIN lists ON lists.id = list_members.list_id
            WHERE list_members.list_id = ?
-           ORDER BY is_owner DESC, users.name COLLATE NOCASE ASC""",
+           ORDER BY is_owner DESC, LOWER(users.name) ASC""",
         (list_id,),
     ).fetchall()
     conn.close()

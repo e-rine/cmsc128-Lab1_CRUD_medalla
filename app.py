@@ -10,6 +10,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from backend.database import (
     DB_PATH,
+    USE_POSTGRES,
     init_db,
     get_all_tasks,
     get_task_by_id,
@@ -47,7 +48,7 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key-change-this-later"
 init_db()
 game.init()          # XP, quests and theme tables (separate from database.py)
 prefs.init()         # small per-user settings, e.g. "hide completed tasks"
-print("Using database file:", os.path.abspath(DB_PATH))
+print("Using database:", "Postgres (DATABASE_URL)" if USE_POSTGRES else os.path.abspath(DB_PATH))
 
 
 # ---------- Template filters ----------
