@@ -43,7 +43,7 @@
       <form class="auth-form active" id="form-login" action="/login-signup" method="POST">
         <div class="field">
           <label for="login-email">Email</label>
-          <input type="email" id="login-email" name="email" placeholder="you@example.com" required />
+          <input type="email" id="login-email" name="email" placeholder="you@example.com" value="{{ login_email|default('') }}" required />
         </div>
         <div class="field">
           <label for="login-password">Password</label>
@@ -58,11 +58,11 @@
       <form class="auth-form" id="form-signup" action="/signup" method="POST">
         <div class="field">
           <label for="signup-name">Name</label>
-          <input type="text" id="signup-name" name="name" placeholder="Your name" required />
+          <input type="text" id="signup-name" name="name" placeholder="Your name" value="{{ signup_name|default('') }}" required />
         </div>
         <div class="field">
           <label for="signup-email">Email</label>
-          <input type="email" id="signup-email" name="email" placeholder="you@example.com" required />
+          <input type="email" id="signup-email" name="email" placeholder="you@example.com" value="{{ signup_email|default('') }}" required />
         </div>
         <div class="field">
           <label for="signup-password">Password</label>
@@ -94,5 +94,13 @@
     });
   </script>
   <script src="{{ url_for('static', filename='scripts/login_signup.js') }}"></script>
+  {% if tab %}
+  <script>
+    window.addEventListener('load', function () {   // runs after login_signup.js has set up the page
+      showAuth('{{ tab }}');
+      document.getElementById('{{ "signup-password" if tab == "signup" else "login-password" }}').focus();
+    });
+  </script>
+  {% endif %}
 </body>
 </html>
