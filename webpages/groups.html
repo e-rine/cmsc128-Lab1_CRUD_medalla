@@ -36,18 +36,18 @@
           {% endfor %}
         {% endwith %}
 
+        {% if groups %}
         <section class="filter-bar">
           <div class="filter-bar-form">
-            {% if groups %}
             <!-- Live search: filters the group cards below as you type -->
             <div class="field filter-search">
               <label for="group-search">Search</label>
               <input type="search" id="group-search" placeholder="Search groups..." autocomplete="off" />
             </div>
-            {% endif %}
             <button type="button" class="btn btn-primary filter-add" onclick="openCreateModal()">+ Create group</button>
           </div>
         </section>
+        {% endif %}
 
         <!-- Groups you belong to -->
         {% for g in groups %}
@@ -141,12 +141,22 @@
           </div>
         </section>
         {% else %}
-        <section class="profile-card">
-          <p class="card-note">You're not in any groups yet. Create one above, or ask someone to add you.</p>
+        <section class="profile-card group-empty group-empty-state">
+          <div class="empty-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+          </div>
+          <h3>No groups yet</h3>
+          <p class="card-note">Create a shared to-do list and add people by email, or ask someone to add you to theirs.</p>
+          <button type="button" class="btn btn-primary" onclick="openCreateModal()">+ Create group</button>
         </section>
         {% endfor %}
 
-        <section class="profile-card" id="search-empty" style="display: none;">
+        <section class="profile-card group-empty" id="search-empty" style="display: none;">
           <p class="card-note">No groups match your search.</p>
         </section>
 
