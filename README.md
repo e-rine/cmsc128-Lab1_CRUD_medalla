@@ -82,7 +82,7 @@ SideQuest is a gamified to-do list web app. Each person has their own account an
 | Backend | Flask (Python) |
 | Database | PostgreSQL via `psycopg2` (production); SQLite (local fallback) |
 | Email | Google Apps Script (Gmail), Brevo API, or SMTP (`smtplib`), whichever is configured |
-| Hosting | <!-- TODO: confirm, e.g. Render (web service + Postgres) --> |
+| Hosting | Render and Neon |
 | Floating window | Document Picture-in-Picture API (browser feature, no library) |
 
 ## Installation and Running Locally
@@ -101,10 +101,10 @@ venv\Scripts\Activate.ps1        # Windows PowerShell
 
 # 3. Install dependencies
 pip install flask psycopg2-binary
-# TODO: if you have a requirements.txt, use: pip install -r requirements.txt
+pip install -r requirements.txt
 
-# 4. (Optional) Use PostgreSQL instead of SQLite
-#    Create a database, then put its URL in .env (see Configuration)
+# 4. Use PostgreSQL instead of SQLite
+Create a database, then put its URL in .env (see Configuration)
 
 # 5. Run the app
 python app.py
@@ -195,8 +195,6 @@ curl -b cookies.txt -X POST $BASE/groups/create -H "X-Requested-With: fetch" \
 curl -b cookies.txt -X POST $BASE/groups/1/rename -H "X-Requested-With: fetch" \
   -d "name=Finals Crew"
 ```
-
-The JSON routes answer with `{"ok": true, "messages": [...], "tasks": [...], "level": ..., "streak": ...}`, or `{"ok": false, "error": "..."}` with a 400 or 404 status when something is wrong. A task you don't own, or a group you are not in, returns **404**. The full list of routes is in the [Routes](#routes) table below.
 
 ## How Activity 1 and Activity 2 Were Merged
 
