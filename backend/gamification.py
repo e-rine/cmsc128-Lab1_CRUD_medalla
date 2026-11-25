@@ -12,7 +12,7 @@ QUESTS_PER_DAY = 3
 XP_PER_LEVEL = 100
 
 # Edit unlock themes 
-UNLOCK_ALL_THEMES = False
+UNLOCK_ALL_THEMES = True
 
 
 # ---------- Daily quest templates ----------
