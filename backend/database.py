@@ -3,19 +3,14 @@ import re
 import sqlite3
 import time
 
-# ---------------------------------------------------------------------------
-# Two modes:
-#   * DATABASE_URL is set (Render / Neon)  -> Postgres
-#   * DATABASE_URL is not set (your PC)    -> SQLite file todolist.db, exactly like before
-# ---------------------------------------------------------------------------
+
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
-if DATABASE_URL.startswith("postgres://"):          # some hosts still use the old prefix
+if DATABASE_URL.startswith("postgres://"):         
     DATABASE_URL = "postgresql://" + DATABASE_URL[len("postgres://"):]
 USE_POSTGRES = DATABASE_URL.startswith("postgresql://")
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "..", "todolist.db")
 
-# Optional: e.g. APP_TIMEZONE=Asia/Manila so "today" rolls over at your midnight, not the server's (UTC).
 APP_TIMEZONE = os.environ.get("APP_TIMEZONE", "").strip()
 if APP_TIMEZONE:
     os.environ["TZ"] = APP_TIMEZONE
@@ -194,7 +189,6 @@ def init_db():
         )
     """)
 
-    # Older databases were created before tasks belonged to users / lists: add the columns.
     columns = table_columns(conn, "tasks")
     if "user_id" not in columns:
         conn.execute("ALTER TABLE tasks ADD COLUMN user_id INTEGER")
@@ -407,8 +401,7 @@ def update_user_password(user_id, password_hash):
 
 
 # ---------- Password reset tokens ----------
-# Only a SHA-256 hash of the token is stored, so a leaked database
-# can't be used to reset anyone's password.
+# Only a SHA-256 hash of the token is stored
 
 def create_reset_token(user_id, token_hash, expires_at):
     """Stores a new reset token. Any earlier tokens for this user stop working."""

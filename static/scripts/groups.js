@@ -139,7 +139,7 @@ document.addEventListener('keydown', function (e) {
   }
 });
 
-// Show today's date in the top bar (same as the My Tasks page)
+// Show today's date in the top bar 
 var topbarDate = document.getElementById('topbar-date');
 if (topbarDate) {
   topbarDate.textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });

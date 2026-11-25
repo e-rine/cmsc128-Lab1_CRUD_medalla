@@ -1,13 +1,5 @@
-/* Task details + edit pop-up on My Tasks.
- *
- * Click (or press Enter on) a task's title/description to open a window with everything about
- * it. Press "Edit" there (or the Edit button on the row) to change the task in the same
- * window; "Save changes" posts to /edit-task/<id>, the same route the old inline form used.
- *
- * The information comes from data-* attributes on each task row in my_tasks.html, so no extra
- * request is needed. Close with the button, the Esc key, or by clicking outside (outside-click
- * is ignored while editing so a slip doesn't throw away your changes).
- */
+// task details pop up functions
+
 (function () {
   var modal = document.getElementById('details-modal');
   if (!modal) return;

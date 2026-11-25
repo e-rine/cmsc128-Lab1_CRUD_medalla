@@ -1,7 +1,5 @@
 """SideQuest gamification: XP with a daily cap, daily quests, streaks and color themes.
 
-Put this file in backend/ next to database.py.
-
 It keeps everything in its OWN tables (xp_events, gamification_meta) and the shared user_prefs table,
 so database.py does not need to change. It only reads the tasks table.
 
@@ -17,22 +15,20 @@ from datetime import date, datetime, timedelta
 
 from backend.database import get_db_connection, table_columns, table_exists
 
-# ---------- Settings you can tweak ----------
+# ---------- Settings ----------
 PRIORITY_XP = {"low": 10, "medium": 20, "high": 30}
 DAILY_TASK_XP_CAP = 100       # most XP that finishing tasks can give in one day
 QUEST_XP = 10                 # XP for each daily quest
 QUESTS_PER_DAY = 3
 XP_PER_LEVEL = 100
 
-# True  = every theme is available from the start.
-# False = you start with the default theme and unlock one more every 5 levels
-#         (see "unlock_level" on each theme below).
-UNLOCK_ALL_THEMES = False
+# Edit unlock themes 
+UNLOCK_ALL_THEMES = True
 
 
 # ---------- Daily quest templates ----------
 # {n} is the goal number, {s} becomes "s" when n is more than 1.
-# Each day 3 different templates are picked by rotation (see quests_for).
+# Each day 3 different templates are picked by rotation.
 QUEST_TEMPLATES = [
     {"key": "any",     "text": "Complete {n} task{s} today",                          "options": [1, 2, 3]},
     {"key": "medium",  "text": "Complete {n} medium-priority task{s} today",          "options": [1, 2], "priority": "medium"},

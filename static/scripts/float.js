@@ -1,18 +1,5 @@
-/* Floating task window (Document Picture-in-Picture).
- *
- * Click "Pop out tasks" in the sidebar and a small always-on-top window shows your
- * tasks. Tick one to complete it (untick to re-open it). XP and quests count like on
- * the normal page.
- *
- * The window's markup lives in the <template>s in sidebar.html and its styles in
- * static/styles/float_window.css. This file only wires them together.
- *
- * Ticking never redraws the list: the row is crossed out in place. With "Hide completed"
- * on, it disappears half a second later. The list is only redrawn when something really
- * changed (for example a task added or finished on the SideQuest page).
- *
- * Needs Chrome or Edge 116+. The window lives while this SideQuest tab stays open.
- */
+// Floating task window (Document Picture-in-Picture).
+
 (function () {
   var button = document.getElementById('float-open');
   if (!button) return;
@@ -35,7 +22,7 @@
   var HIDE_DELAY_MS = 500;   // buffer before a ticked task disappears (only with "Hide completed" on)
   var REFRESH_MS = 30000;    // how often the window quietly checks for changes
 
-  // theme colors copied from the main page so the window matches your theme
+  // theme colors copied from the main page so the window matches the theme
   var THEME_VARS = ['--bg', '--panel', '--border', '--text', '--text-muted',
                     '--primary', '--primary-dark', '--primary-soft', '--danger', '--success'];
 
@@ -71,8 +58,6 @@
   }
 
   // ---------- build the window from the template ----------
-
-  // finds the elements marked data-ref="..." inside a node
   function refs(root) {
     var found = {};
     root.querySelectorAll('[data-ref]').forEach(function (node) { found[node.dataset.ref] = node; });
@@ -205,7 +190,7 @@
     });
   }
 
-  // ---------- filters (built here, so the <template> doesn't need to change) ----------
+  // ---------- filters ----------
 
   var SORT_OPTIONS = [['due_date', 'Due date'], ['date_added', 'Date added'], ['priority', 'Priority'], ['tag', 'Tag']];
   var PRIORITY_OPTIONS = [['', 'All'], ['low', 'Low'], ['medium', 'Medium'], ['high', 'High']];
@@ -265,7 +250,7 @@
     bar.appendChild(clear);
     ui.filterBody = bar;
 
-    // one slim row: "9 left" on the left, "Filters" arrow on the right
+    // one slim row
     var row = doc.createElement('div');
     row.className = 'toolrow';
 
@@ -321,7 +306,7 @@
     api('/api/float-tasks' + query()).then(function (data) { render(data, true); }).catch(showError);
   }
 
-  // "Hide completed" is the same saved setting as on the My Tasks page
+  // "Hide completed" 
   function setHideCompleted(on) {
     api('/api/float-tasks/hide-completed' + query({ hide: on ? '1' : '0' }), { method: 'POST' })
       .then(function (data) { render(data, true); })
