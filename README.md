@@ -121,9 +121,8 @@ Settings are read from environment variables, which can also be put in a `.env` 
 | `SECRET_KEY` | Signs the login cookie. Set a long random value (`python -c "import secrets; print(secrets.token_hex(32))"`). If missing, an insecure development key is used. |
 | `DATABASE_URL` | PostgreSQL connection string, e.g. `postgresql://user:password@localhost:5432/sidequest`. If empty, SQLite (`todolist.db`) is used. |
 | `APP_TIMEZONE` | Optional time zone for dates and deadlines, e.g. `Asia/Manila`. |
-| `APPS_SCRIPT_URL`, `APPS_SCRIPT_SECRET` | Send reset emails through a Google Apps Script web app that uses your Gmail (HTTPS). Tried first. |
-| `BREVO_API_KEY`, `MAIL_FROM` | Send reset emails through Brevo's HTTPS API. Tried second. |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | Send through a normal SMTP server. Tried third. |
+| `APPS_SCRIPT_URL`, `APPS_SCRIPT_SECRET` | Send reset emails through a Google Apps Script web app. |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | Send through a normal SMTP server. |
 
 If none of the email settings are set (or sending fails), the app runs in demo mode: the reset link is printed in the terminal instead of emailed.
 
