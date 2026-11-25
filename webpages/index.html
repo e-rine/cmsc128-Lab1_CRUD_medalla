@@ -7,27 +7,91 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles/my_tasks.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/landing.css') }}" />
 </head>
-<body class="welcome-page">
+<body class="landing">
 
-  <div class="app-shell">
-    <!-- Content -->
-    <div class="content">
-      <main>
-        <section class="hero">
-          <h1>Lorem ipsum dolor sit amet consectetur adipiscing elit.</h1>
-          <p>Lorem ipsum dolor sit amet consectetur adipiscing elit.</p>
-          <a href="/login-signup" class="btn btn-primary" style="display:inline-block; text-decoration:none;">Get Started</a>
-        </section>
-      </main>
+  <header class="l-nav">
+    <a href="/" class="brand l-brand">
+      <span class="brand-mark" role="img" aria-label="SideQuest logo"></span> SideQuest
+    </a>
+    <nav class="l-links">
+      <a href="#features">Tasks</a>
+      <a href="#quests">Quests</a>
+      <a href="#groups">Groups</a>
+    </nav>
+    <div class="l-nav-actions">
+      <a href="/login-signup" class="btn btn-ghost">Log in</a>
+      <a href="/login-signup" class="btn btn-primary">Get Started</a>
     </div>
-  </div>
+  </header>
 
-  <script>
-    var topbarDate = document.getElementById('topbar-date');
-    if (topbarDate) {
-      topbarDate.textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
-    }
-  </script>
+  <main>
+    <section class="l-hero">
+
+      <div class="fc fc-tl"><b>My Tasks</b>
+        <div class="fc-row"><span class="chk on"></span><span class="done">Read chapter 4</span></div>
+        <div class="fc-row"><span class="chk"></span>Finish report</div>
+      </div>
+
+      <div class="fc fc-tr"><b>Level</b>
+        <span class="level-badge">Lv 3</span>
+        <div class="bar"><div class="bar-fill" style="width: 62%;"></div></div>
+        <span class="streak-pill on">&#128293; 5 day streak</span>
+      </div>
+
+      <div class="fc fc-ml"><b>Daily quests</b>
+        <div class="fc-row"><span class="chk on"></span><span class="done">Add 2 tasks</span></div>
+        <div class="fc-row"><span class="chk"></span>Finish 1 high task</div>
+      </div>
+
+      <div class="fc fc-mr"><b>Groups</b>
+        <div class="fc-row">Study group</div>
+        <div class="l-avatars"><i>E</i><i>J</i><i>M</i><i>+2</i></div>
+      </div>
+
+      <div class="fc fc-bl"><b>Due soon</b>
+        <div class="fc-row"><span class="chk"></span>Math problem set <span class="priority-pill priority-high">High</span></div>
+        <div class="fc-row"><span class="chk"></span>Team slides <span class="priority-pill priority-medium">Medium</span></div>
+        <div class="fc-row"><span class="chk on"></span><span class="done">Pay bills</span> <span class="category-pill">Finance</span></div>
+      </div>
+
+      <div class="fc fc-br"><b>Achievements</b>
+        <div class="fc-row"><span class="chk on"></span>First task done</div>
+        <div class="fc-row"><span class="chk on"></span>3 day streak</div>
+        <div class="fc-row"><span class="chk"></span>Reach level 5</div>
+      </div>
+
+      <div class="l-chips" aria-hidden="true"><span>&#128218;</span><span>&#128188;</span><span>&#10024;</span><span>&#128176;</span></div>
+
+      <div class="l-hero-center">
+        <div class="l-tile"><span class="brand-mark brand-mark-lg" aria-hidden="true"></span></div>
+        <h1>Turn your to-do list <span>into a quest.</span></h1>
+        <p class="l-sub">Plan tasks, team up in groups, earn XP and keep your streak alive. Getting things done, now with levels.</p>
+        <div class="l-trust"><span class="l-avatars"><i>E</i><i>J</i><i>M</i></span> Made for students and teams</div>
+        <a href="/login-signup" class="btn btn-primary l-cta">Get Started</a>
+        <span class="l-note">Level up your productivity!</span>
+      </div>
+    </section>
+
+    <section class="l-features" id="features">
+      <div class="home-card">
+        <div class="l-icon">&#9989;</div>
+        <h2>Tasks with real deadlines</h2>
+        <p>Set the exact date and time, sort by priority and category, and pop your list out into a floating window.</p>
+      </div>
+      <div class="home-card" id="quests">
+        <div class="l-icon">&#127942;</div>
+        <h2>Daily quests and XP</h2>
+        <p>Finish quests, level up, keep your streak and unlock new color themes as you go.</p>
+      </div>
+      <div class="home-card" id="groups">
+        <div class="l-icon">&#128101;</div>
+        <h2>Shared group lists</h2>
+        <p>Create a group, add people by email and see who added what on a shared to-do list.</p>
+      </div>
+    </section>
+  </main>
+
 </body>
 </html>
