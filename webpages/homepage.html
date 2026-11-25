@@ -16,12 +16,16 @@
     {% include 'sidebar.html' %}
 
     <div class="content">
+
+      <div class="topbar topbar-compact">
+        <div class="topbar-date">{{ today_label }}</div>
+      </div>
+
       <main class="home">
 
         <!-- Greeting + level -->
         <section class="home-hero">
           <div class="home-hero-text">
-            <span class="home-date">{{ today_label }}</span>
             <h1>{{ greeting }}, {{ session.get('user_name') }}</h1>
             {% if stats.overdue %}
               <p>You have <strong class="text-danger">{{ stats.overdue }} overdue</strong> task{{ '' if stats.overdue == 1 else 's' }}. Let's clear {{ 'it' if stats.overdue == 1 else 'them' }} first.</p>
@@ -41,7 +45,7 @@
               <span class="level-xp">{{ level_info.xp }} XP total</span>
             </div>
             <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="{{ level_info.xp_per_level }}" aria-valuenow="{{ level_info.xp_in_level }}">
-              <div class="bar-fill" style="width: {{ level_info.xp_in_level }}%;"></div>
+              <div class="bar-fill" data-width="{{ level_info.xp_in_level }}"></div>
             </div>
             <span class="level-note">{{ level_info.xp_per_level - level_info.xp_in_level }} XP to level {{ level_info.level + 1 }}</span>
             <span class="streak-pill{% if streak %} on{% endif %}">&#128293; {{ streak }} day streak</span>
@@ -173,7 +177,7 @@
                 <span class="percent">{{ stats.percent }}%</span>
               </div>
               <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ stats.percent }}">
-                <div class="bar-fill" style="width: {{ stats.percent }}%;"></div>
+                <div class="bar-fill" data-width="{{ stats.percent }}"></div>
               </div>
               <p class="card-note">
                 {% if stats.total %}{{ stats.completed }} of {{ stats.total }} tasks done.{% else %}Nothing to measure yet.{% endif %}
@@ -187,5 +191,9 @@
     </div>
   </div>
 
+  <script>
+    document.querySelectorAll('[data-width]').forEach(function (el) { el.style.width = el.dataset.width + '%'; });
+    document.querySelectorAll('[data-color]').forEach(function (el) { el.style.background = el.dataset.color; });
+  </script>
 </body>
 </html>

@@ -1,0 +1,106 @@
+/* variables.css: the single place for design tokens (colors, spacing, type, sizes).
+   Every other stylesheet reads from here, so changing a value here changes it on every page.
+   The chosen theme (/theme.css) still overrides the color variables below on :root. */
+
+:root {
+  /* ---------- Colors (themes override these) ---------- */
+  --bg: #f5f6fa;
+  --panel: #ffffff;
+  --border: #e5e7ee;
+  --text: #1f2430;
+  --text-muted: #6b7280;
+  --primary: #4f46e5;
+  --primary-dark: #4338ca;
+  --primary-soft: rgba(79, 70, 229, 0.1);   /* light tint of the primary color (active nav, pills, badges) */
+  --danger: #e0483f;
+  --danger-dark: #c93b33;
+  --success: #1a9e6a;
+
+  /* soft tints used behind colored text */
+  --danger-soft: rgba(224, 72, 63, 0.1);
+  --danger-border: rgba(224, 72, 63, 0.35);
+  --success-soft: rgba(26, 158, 106, 0.1);
+  --warning: #a16800;
+  --warning-soft: rgba(217, 158, 0, 0.12);
+  --neutral-soft: rgba(107, 114, 128, 0.12);
+  --streak: #c2410c;
+  --streak-soft: rgba(234, 88, 12, 0.12);
+
+  --overlay: rgba(15, 17, 26, 0.45);        /* dark backdrop behind popups */
+  --toast-bg: #1f2430;
+  --toast-text: #ffffff;
+  --toast-action: #a5b4fc;
+
+  /* ---------- Typography ---------- */
+  --font-body: "Inter", sans-serif;
+  --font-heading: "Sora", sans-serif;
+  font-family: var(--font-body);
+
+  --fs-xs: 0.76rem;          /* labels, pills, table headers */
+  --fs-sm: 0.82rem;          /* secondary text, notes */
+  --fs-md: 0.88rem;          /* buttons, inputs, nav, normal UI text */
+  --fs-lg: 0.95rem;          /* task titles, quest text, emphasised text */
+  --fs-card-title: 1rem;     /* card headings */
+  --fs-page-title: 1.6rem;   /* "My Tasks", "My Groups", ... */
+  --fs-hero: 2rem;           /* homepage greeting, welcome page */
+  --fs-stat: 1.8rem;         /* big numbers */
+
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* ---------- Spacing scale (use these instead of raw px) ---------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-16: 64px;
+
+  /* named spacing, so the same situation always gets the same gap */
+  --gap-card: var(--space-5);       /* between cards / blocks, vertical and in grids */
+  --gap-inline: var(--space-4);     /* between form fields and filters */
+  --header-gap: var(--space-6);     /* between the page heading and the first block */
+  --card-pad: var(--space-5) var(--space-6);      /* normal card padding */
+  --card-pad-sm: var(--space-4) var(--space-5);   /* stat / level cards */
+  --table-pad-x: var(--space-5);    /* left/right padding of task table rows */
+
+  /* ---------- Page layout ---------- */
+  --sidebar-w: 240px;
+  --sidebar-w-md: 210px;
+  --page-pad-x: var(--space-10);
+  --page-pad-top: var(--space-6);
+  --page-pad-bottom: var(--space-16);
+  --topbar-h: 24px;                 /* the date row above every page heading */
+  --topbar-gap: var(--space-3);     /* space between the date row and the heading */
+  --content-narrow: 720px;          /* profile page cards */
+
+  /* ---------- Controls ---------- */
+  --control-h: 40px;                /* buttons, inputs, selects, nav links */
+  --control-h-sm: 32px;
+  --control-h-lg: 48px;             /* main page action ("+ Add task") */
+  --control-pad-x: var(--space-3);
+
+  /* ---------- Shape, depth, motion ---------- */
+  --radius-sm: 6px;
+  --radius-md: 8px;                 /* buttons, inputs */
+  --radius: 12px;                   /* cards */
+  --radius-lg: 16px;                /* popups */
+  --radius-pill: 999px;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 2px 8px rgba(17, 24, 39, 0.12);
+  --shadow-modal: 0 20px 50px rgba(0, 0, 0, 0.2);
+
+  --transition: 0.15s ease;
+
+  --z-modal: 1000;
+  --z-toast: 1100;
+}
+
+/* Breakpoints (CSS can't use variables inside @media, so these are the values used everywhere):
+   960px = homepage columns stack, 860px = tables/stat grids stack and the sidebar slims,
+   640px = group cards and profile forms stack, 560px = phone layout (sidebar becomes a top bar). */

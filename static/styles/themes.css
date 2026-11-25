@@ -1,9 +1,0 @@
-/* Theme support. Loaded by sidebar.html, so it comes after my_tasks.css.
-   The chosen theme sets CSS variables (--primary, --bg, ...) on :root.
-   These rules cover the few places in my_tasks.css that hard-code the default
-   indigo color, so they follow the theme too. */
-
-.sidebar-nav a.active { background: var(--primary-soft, rgba(79, 70, 229, 0.1)); }
-.category-pill { background: var(--primary-soft, rgba(79, 70, 229, 0.1)); }
-.sidebar-avatar { background: var(--primary-soft, rgba(79, 70, 229, 0.1)); }
-a.sidebar-user.active { background: var(--primary-soft, rgba(79, 70, 229, 0.08)); }

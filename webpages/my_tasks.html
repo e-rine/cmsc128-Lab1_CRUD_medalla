@@ -17,10 +17,7 @@
     <!-- Content -->
     <div class="content">
 
-      <div class="topbar">
-        <div class="topbar-search">
-          Search tasks...
-        </div>
+      <div class="topbar topbar-compact">
         <div class="topbar-date" id="topbar-date"></div>
       </div>
 
@@ -36,7 +33,6 @@
             <p>Add a task and set exactly when it's due.</p>
             {% endif %}
           </div>
-          <button type="button" class="btn btn-primary" onclick="openAddModal()">+ Add task</button>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -51,6 +47,12 @@
         <section class="filter-bar">
           <form method="GET" action="/my-tasks" class="filter-bar-form" id="filter-form">
             {% if current_list %}<input type="hidden" name="list" value="{{ current_list['id'] }}" />{% endif %}
+            <!-- Live search: filters the rows below as you type. It sits inside this form so the Sort/Priority/Category
+                 dropdowns keep your search when they reload the page (it is read back from ?q= by the script at the bottom). -->
+            <div class="field filter-search">
+              <label for="task-search">Search</label>
+              <input type="search" id="task-search" name="q" placeholder="Search tasks..." autocomplete="off" />
+            </div>
             <div class="field">
               <label for="sort">Sort by</label>
               <select id="sort" name="sort" onchange="document.getElementById('filter-form').submit()">
@@ -87,6 +89,7 @@
               <input type="checkbox" name="hide" value="1" form="hide-done-form" {% if hide_done %}checked{% endif %} onchange="this.form.submit()" />
               Hide completed tasks
             </label>
+            <button type="button" class="btn btn-primary filter-add" onclick="openAddModal()">+ Add task</button>
           </form>
           <!-- saves the "Hide completed" checkbox above (it points here with form="hide-done-form") -->
           <form id="hide-done-form" method="POST" action="/preferences/hide-completed"></form>
@@ -158,6 +161,7 @@
           {% else %}
           <div class="empty-state">{% if hide_done %}No open tasks. Completed tasks are hidden.{% else %}No tasks yet.{% endif %}</div>
           {% endfor %}
+          <div class="empty-state" id="search-empty" hidden>No tasks match your search.</div>
 
         </section>
 
@@ -351,6 +355,42 @@
         return originalOpenAddModal.apply(this, arguments);
       };
     }
+  </script>
+  <script>
+    // Task search: hides the rows that don't match what you typed (title, description, category, priority, date, who added it).
+    // Every word you type has to match somewhere in the task.
+    (function () {
+      var input = document.getElementById('task-search');
+      if (!input) return;
+      var rows = Array.prototype.slice.call(document.querySelectorAll('.task-row'));
+      var none = document.getElementById('search-empty');
+
+      function applySearch() {
+        var terms = input.value.toLowerCase().split(/\s+/).filter(Boolean);
+        var last = null, shown = 0;
+        rows.forEach(function (row) {
+          row.classList.remove('last-visible');
+          var d = row.dataset;
+          var text = [d.title, d.description, d.category, d.priority, d.deadline, d.addedBy].join(' ').toLowerCase();
+          var match = terms.every(function (t) { return text.indexOf(t) !== -1; });
+          row.style.display = match ? '' : 'none';
+          if (match) { last = row; shown++; }
+        });
+        if (last) last.classList.add('last-visible');
+        if (none) none.hidden = !(terms.length && rows.length && !shown);
+      }
+
+      // keep the search when a dropdown reloads the page
+      var saved = new URLSearchParams(window.location.search).get('q');
+      if (saved) input.value = saved;
+
+      input.addEventListener('input', applySearch);
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') e.preventDefault();                       // don't reload the page
+        if (e.key === 'Escape') { input.value = ''; applySearch(); }
+      });
+      applySearch();
+    })();
   </script>
 </body>
 </html>

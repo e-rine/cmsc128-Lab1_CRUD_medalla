@@ -135,7 +135,9 @@
     var open = doc.createElement('button');
     open.type = 'button';
     open.className = 'addbtn';
-    open.textContent = '+ Add task';
+    open.textContent = '+';
+    open.title = 'Add task';
+    open.setAttribute('aria-label', 'Add task');
     open.addEventListener('click', openAdd);
     bar.appendChild(open);
     ui.list.parentNode.appendChild(bar);

@@ -186,7 +186,7 @@ def homepage():
 def login_page():
     if request.method == "GET":
         if "user_id" in session:
-            return redirect(url_for("my_tasks"))
+            return redirect(url_for("homepage"))
         return render_template("login_signup.html")
 
     email = request.form.get("email", "").strip().lower()
@@ -199,7 +199,7 @@ def login_page():
 
     session["user_id"] = user["id"]
     session["user_name"] = user["name"]
-    return redirect(url_for("my_tasks"))
+    return redirect(url_for("homepage"))
 
 
 # ---------- Password recovery ----------

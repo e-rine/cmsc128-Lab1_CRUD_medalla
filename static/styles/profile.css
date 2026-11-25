@@ -1,20 +1,19 @@
+/* Profile page, and the cards the Groups page reuses (.profile-card, .card-note).
+   Card background, border and corners come from base.css. */
+
 .profile-card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 22px 24px;
-  margin-bottom: 20px;
-  max-width: 720px;
+  margin-bottom: var(--gap-card);
+  max-width: var(--content-narrow);
 }
 
 .profile-card h3 {
-  font-size: 1rem;
-  margin: 0 0 4px;
+  font-size: var(--fs-card-title);
+  margin: 0 0 var(--space-1);
 }
 
 .card-note {
-  margin: 0 0 16px;
-  font-size: 0.84rem;
+  margin: 0 0 var(--space-4);
+  font-size: var(--fs-sm);
   color: var(--text-muted);
 }
 
@@ -22,8 +21,8 @@
 .profile-header {
   display: flex;
   align-items: center;
-  gap: 18px;
-  margin-top: 20px;
+  gap: var(--space-4);
+  margin-bottom: var(--gap-card);
 }
 
 .profile-avatar {
@@ -33,9 +32,9 @@
   border-radius: 50%;
   background: var(--primary);
   color: #fff;
-  font-family: "Sora", sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -54,30 +53,27 @@
 .profile-identity p {
   margin: 0;
   color: var(--text-muted);
-  font-size: 0.9rem;
+  font-size: var(--fs-md);
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .profile-since {
   display: block;
-  margin-top: 4px;
-  font-size: 0.78rem;
+  margin-top: var(--space-1);
+  font-size: var(--fs-sm);
   color: var(--text-muted);
 }
 
-.profile-logout {
-  display: inline-block;
-  text-decoration: none;
-}
+.profile-logout { display: inline-flex; }
 
 /* ---------- Forms ---------- */
-.profile-card .flash-message { margin-bottom: 14px; }
+.profile-card .flash-message { margin-bottom: var(--space-4); }
 
-.profile-card form .form-row:last-of-type { margin-bottom: 16px; }
+.profile-card form .form-row:last-of-type { margin-bottom: var(--space-4); }
 
 /* jump-to-section links land with some breathing room */
-.profile-card[id] { scroll-margin-top: 20px; }
+.profile-card[id] { scroll-margin-top: var(--space-5); }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 640px) {
@@ -86,5 +82,5 @@
 
 @media (max-width: 480px) {
   .profile-header { flex-wrap: wrap; }
-  .profile-logout { width: 100%; text-align: center; }
+  .profile-logout { width: 100%; }
 }

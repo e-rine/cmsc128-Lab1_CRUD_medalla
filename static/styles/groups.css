@@ -1,55 +1,22 @@
-/* Styles for the My Groups page (modals + group actions) */
-.gm-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(17, 24, 39, 0.45);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  z-index: 1000;
-}
-
-.gm-overlay.open {
-  display: flex;
-}
-
-.gm-box {
-  background: #fff;
-  border-radius: 16px;
-  padding: 24px;
-  width: 100%;
-  max-width: 480px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
-}
-
-.gm-box h3 {
-  margin: 0 0 4px;
-}
-
-.gm-box .card-note {
-  margin: 0 0 16px;
-}
+/* My Groups page (cards, member lists and the group popups).
+   Popup frame, buttons, fields and error box come from base.css. */
 
 .gm-members-label {
   display: block;
-  font-size: 0.85rem;
-  margin: 16px 0 6px;
+  font-size: var(--fs-md);
+  margin: var(--space-4) 0 var(--space-2);
 }
+
+.gm-box .card-note { margin: 0 0 var(--space-4); }
 
 .gm-member-row {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 
-.gm-member-row .field {
-  flex: 1;
-  margin: 0;
-}
+.gm-member-row .field { flex: 1; margin: 0; }
 
 .gm-remove {
   border: none;
@@ -57,112 +24,58 @@
   font-size: 1.3rem;
   line-height: 1;
   cursor: pointer;
-  color: #6b7280;
-  padding: 4px 8px;
+  color: var(--text-muted);
+  padding: var(--space-1) var(--space-2);
 }
 
-.gm-remove:hover {
-  color: #dc2626;
-}
+.gm-remove:hover { color: var(--danger); }
 
-#add-member-extra {
-  margin-top: 8px;
-}
-
-#add-member-extra .gm-member-row {
-  margin-bottom: 8px;
-}
-
-.gm-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 20px;
-}
+#add-member-extra { margin-top: var(--space-2); }
 
 .group-actions {
   display: flex;
-  gap: 8px;
-  margin-top: 12px;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
   flex-wrap: wrap;
-}
-
-
-.gm-error {
-  background: #fef2f2;
-  color: #b91c1c;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 0.85rem;
-  margin-bottom: 14px;
-}
-
-.btn-danger {
-  background: #dc2626;
-  color: #fff;
-  border: 1px solid #dc2626;
-  border-radius: 10px;
-  padding: 10px 16px;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.btn-danger:hover {
-  background: #b91c1c;
-  border-color: #b91c1c;
 }
 
 .group-delete-btn {
   flex-shrink: 0;
-  width: 34px;
-  height: 34px;
+  width: var(--control-h);
+  height: var(--control-h);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: transparent;
-  color: #6b7280;
+  color: var(--text-muted);
   cursor: pointer;
 }
 
 .group-delete-btn:hover,
 .group-delete-btn:focus-visible {
-  background: #fef2f2;
-  color: #dc2626;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
-.gm-hidden {
-  display: none;
-}
+.gm-hidden { display: none; }
 
-.group-title-link {
-  color: inherit;
-  text-decoration: none;
-}
-
-.group-title-link:hover {
-  text-decoration: underline;
-}
+.group-title-link { color: inherit; text-decoration: none; }
+.group-title-link:hover { text-decoration: underline; }
 
 /* The card buttons appear when hovering the card */
 .group-hover-actions {
   opacity: 0;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--transition);
 }
 
 .group-card:hover .group-hover-actions,
-.group-card:focus-within .group-hover-actions {
-  opacity: 1;
-}
+.group-card:focus-within .group-hover-actions { opacity: 1; }
 
 /* No hover on touch screens, so always show the buttons there */
 @media (hover: none) {
-  .group-hover-actions {
-    opacity: 1;
-  }
+  .group-hover-actions { opacity: 1; }
 }
 
 /* Group card: info on the left, actions on the right, full width */
@@ -170,59 +83,44 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-4);
   width: 100%;
   max-width: none;
 }
 
-main:has(.group-card) {
-  max-width: none;
-}
+main:has(.group-card) { max-width: none; }
 
-.group-info {
-  min-width: 0;
-}
+.group-info { min-width: 0; }
 
 .group-info h3,
 .group-info .card-note {
   margin-top: 0;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 
 .group-side {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   flex-shrink: 0;
 }
 
 .group-side .group-hover-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
-/* Card action buttons */
+/* Card action buttons (size and shape come from .btn) */
 .group-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 16px;
-  border-radius: 10px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  line-height: 1;
   white-space: nowrap;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition), transform 0.1s ease;
 }
 
-.group-btn svg {
-  flex-shrink: 0;
-}
+.group-btn svg { flex-shrink: 0; }
 
 .group-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(17, 24, 39, 0.12);
+  box-shadow: var(--shadow-md);
 }
 
 .group-btn:active {
@@ -230,16 +128,8 @@ main:has(.group-card) {
   box-shadow: none;
 }
 
-.group-btn.btn-ghost {
-  border: 1px solid #e5e7eb;
-  color: #374151;
-  background: #fff;
-}
-
-.group-btn.btn-ghost:hover {
-  background: #f9fafb;
-  border-color: #cbd5e1;
-}
+.group-btn.btn-ghost { color: var(--text); background: var(--panel); }
+.group-btn.btn-ghost:hover { background: var(--bg); }
 
 /* Stack the card on small screens */
 @media (max-width: 640px) {
@@ -248,17 +138,13 @@ main:has(.group-card) {
     align-items: stretch;
   }
 
-  .group-side {
-    justify-content: space-between;
-  }
+  .group-side { justify-content: space-between; }
 
-  /* owners now have three buttons (See members, Rename, Add member), so let them wrap */
-  .group-side .group-hover-actions {
-    flex-wrap: wrap;
-  }
+  /* owners can have several buttons, so let them wrap */
+  .group-side .group-hover-actions { flex-wrap: wrap; }
 }
 
-/* Remove / Leave button inside the members popup */
+/* Remove / Leave button inside the members list */
 .member-list li.has-action {
   position: relative;
   padding-right: 64px;
@@ -271,21 +157,21 @@ main:has(.group-card) {
   transform: translateY(-50%);
   border: none;
   background: none;
-  color: #dc2626;
-  padding: 4px 0;
+  color: var(--danger);
+  padding: var(--space-1) 0;
   font: inherit;
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
   cursor: pointer;
 }
 
 .member-remove-btn:hover,
 .member-remove-btn:focus-visible {
-  color: #b91c1c;
+  color: var(--danger-dark);
   text-decoration: underline;
 }
 
-/* ---------- Members popup: cleaner rows ---------- */
+/* ---------- Members list: cleaner rows ---------- */
 .gm-box .member-list {
   list-style: none;
   margin: 0;
@@ -299,26 +185,24 @@ main:has(.group-card) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  column-gap: 12px;
+  column-gap: var(--space-3);
   row-gap: 2px;
-  padding: 12px 4px;
-  border-bottom: 1px solid var(--border, #e5e7eb);
+  padding: var(--space-3) var(--space-1);
+  border-bottom: 1px solid var(--border);
 }
 
-.gm-box .member-list li:last-child {
-  border-bottom: none;
-}
+.gm-box .member-list li:last-child { border-bottom: none; }
 
 .gm-box .member-list strong {
   grid-column: 1;
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
 }
 
 .gm-box .member-list li span {
   grid-column: 1;
-  font-size: 0.82rem;
-  color: var(--text-muted, #6b7280);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
   overflow-wrap: anywhere;
 }
 
@@ -327,12 +211,12 @@ main:has(.group-card) {
   grid-column: 2;
   grid-row: 1 / span 2;
   font-style: normal;
-  font-size: 0.72rem;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: rgba(79, 70, 229, 0.1);
-  color: var(--primary, #4f46e5);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--primary-soft);
+  color: var(--primary);
 }
 
 /* Remove / Leave: a small outlined button instead of loose red text */
@@ -341,55 +225,46 @@ main:has(.group-card) {
   transform: none;
   grid-column: 2;
   grid-row: 1 / span 2;
-  padding: 5px 12px;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--danger-border);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
 }
 
 .gm-box .member-remove-btn:hover,
 .gm-box .member-remove-btn:focus-visible {
-  background: #fef2f2;
+  background: var(--danger-soft);
   text-decoration: none;
 }
 
 /* ---------- "Manage group" popup (rename + members + add members) ---------- */
-.gm-box.gm-manage {
-  max-width: 540px;
-}
-
 .gm-section {
-  margin-top: 18px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border, #e5e7eb);
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
 }
 
 .gm-section-title {
-  font-size: 0.76rem;
-  font-weight: 600;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-muted, #6b7280);
-  margin-bottom: 8px;
+  color: var(--text-muted);
+  margin-bottom: var(--space-2);
 }
 
 .gm-inline-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
-.gm-inline-row .field {
-  flex: 1;
-  margin: 0;
-}
+.gm-inline-row .field { flex: 1; margin: 0; }
 
 .gm-add-actions {
   justify-content: space-between;
-  margin-top: 4px;
+  margin-top: var(--space-1);
 }
 
-.gm-manage .member-list {
-  max-height: 240px;
-}
+.gm-manage .member-list { max-height: 240px; }

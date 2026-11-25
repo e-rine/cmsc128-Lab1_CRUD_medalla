@@ -133,7 +133,7 @@ body {
   text-transform: uppercase;
   color: var(--text-muted, #6b7280);
 }
-.list { flex: 1; overflow-y: auto; padding: 4px 10px 10px; }
+.list { flex: 1; overflow-y: auto; padding: 4px 10px 80px; }   /* extra bottom space so the + button never covers the last task */
 
 .task {
   display: flex;
@@ -179,25 +179,31 @@ body {
 }
 .empty.err { color: var(--danger, #e0483f); }
 
-/* "+ Add task" bar under the list */
+/* floating "+" button in the bottom-right corner (opens the add-task popup) */
 .addbar {
-  padding: 10px 12px;
-  background: var(--panel, #fff);
-  border-top: 1px solid var(--border, #e5e7ee);
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 5;
 }
 .addbtn {
-  width: 100%;
+  width: 48px;
+  height: 48px;
   border: none;
-  border-radius: 8px;
-  padding: 9px 12px;
+  border-radius: 14px;
+  padding: 0 0 3px;          /* the + sign sits optically centered */
   background: var(--primary, #4f46e5);
   color: #fff;
   font: inherit;
-  font-weight: 600;
-  font-size: 13px;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1;
   cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
 }
-.addbtn:hover { background: var(--primary-dark, #4338ca); }
+.addbtn:hover { background: var(--primary-dark, #4338ca); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3); }
+.addbtn:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25); }
 
 /* add-task popup inside the window */
 .overlay {
@@ -256,7 +262,7 @@ body {
   position: fixed;
   left: 12px;
   right: 12px;
-  bottom: 64px;
+  bottom: 80px;
   z-index: 20;
   background: #e1f2ec;
   color: var(--success, #1a9e6a);

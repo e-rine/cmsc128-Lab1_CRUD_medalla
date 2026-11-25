@@ -18,10 +18,7 @@
 
     <div class="content">
 
-      <div class="topbar">
-        <div class="topbar-search">
-          Search groups...
-        </div>
+      <div class="topbar topbar-compact">
         <div class="topbar-date" id="topbar-date"></div>
       </div>
 
@@ -31,7 +28,6 @@
             <h1>My Groups</h1>
             <p>Create a collaborative To-Do-List and add people by email.</p>
           </div>
-          <button type="button" class="btn btn-primary" onclick="openCreateModal()">+ Create group</button>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -39,6 +35,19 @@
             <div class="flash-message flash-{{ category }}">{{ message }}</div>
           {% endfor %}
         {% endwith %}
+
+        <section class="filter-bar">
+          <div class="filter-bar-form">
+            {% if groups %}
+            <!-- Live search: filters the group cards below as you type -->
+            <div class="field filter-search">
+              <label for="group-search">Search</label>
+              <input type="search" id="group-search" placeholder="Search groups..." autocomplete="off" />
+            </div>
+            {% endif %}
+            <button type="button" class="btn btn-primary filter-add" onclick="openCreateModal()">+ Create group</button>
+          </div>
+        </section>
 
         <!-- Groups you belong to -->
         {% for g in groups %}
@@ -136,6 +145,10 @@
           <p class="card-note">You're not in any groups yet. Create one above, or ask someone to add you.</p>
         </section>
         {% endfor %}
+
+        <section class="profile-card" id="search-empty" style="display: none;">
+          <p class="card-note">No groups match your search.</p>
+        </section>
 
       </main>
     </div>
@@ -441,6 +454,45 @@
       new MutationObserver(function () {
         if (!modal.classList.contains('open')) extra.textContent = '';
       }).observe(modal, { attributes: true, attributeFilter: ['class'] });
+    })();
+  </script>
+  <script>
+    // Group search: hides the cards that don't match what you typed (group name, owner, and members' names or emails).
+    // Every word you type has to match somewhere in the group.
+    (function () {
+      var input = document.getElementById('group-search');
+      if (!input) return;
+      var cards = Array.prototype.slice.call(document.querySelectorAll('.group-card'));
+      var none = document.getElementById('search-empty');
+
+      // collect the searchable text of each card once (not the button labels)
+      var texts = cards.map(function (card) {
+        var parts = [];
+        var name = card.querySelector('h3');
+        var note = card.querySelector('.card-note');
+        var members = card.querySelector('.member-list');
+        if (name) parts.push(name.textContent);
+        if (note) parts.push(note.textContent);
+        if (members) parts.push(members.textContent);
+        return parts.join(' ').replace(/\s+/g, ' ').toLowerCase();
+      });
+
+      function applySearch() {
+        var terms = input.value.toLowerCase().split(/\s+/).filter(Boolean);
+        var shown = 0;
+        cards.forEach(function (card, i) {
+          var match = terms.every(function (t) { return texts[i].indexOf(t) !== -1; });
+          card.style.display = match ? '' : 'none';
+          if (match) shown++;
+        });
+        if (none) none.style.display = (terms.length && cards.length && !shown) ? '' : 'none';
+      }
+
+      input.addEventListener('input', applySearch);
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') { input.value = ''; applySearch(); }
+      });
+      applySearch();
     })();
   </script>
 </body>
