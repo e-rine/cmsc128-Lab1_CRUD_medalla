@@ -194,8 +194,10 @@ def login_page():
 
     user = get_user_by_email(email)
     if user is None or not check_password_hash(user["password_hash"], password):
+        # Show the page again (not a redirect) so the email stays filled in.
+        # The password is never sent back, so that field comes back empty.
         flash("Incorrect email or password.", "error")
-        return redirect(url_for("login_page"))
+        return render_template("login_signup.html", tab="login", login_email=email)
 
     session["user_id"] = user["id"]
     session["user_name"] = user["name"]
@@ -286,23 +288,35 @@ def reset_password(token):
     return redirect(url_for("login_page"))
 
 
-@app.route("/signup", methods=["POST"])
+@app.route("/signup", methods=["GET", "POST"])
 def signup():
+    if request.method == "GET":
+        return redirect(url_for("login_page") + "#signup")
+
     name = request.form.get("name", "").strip()
     email = request.form.get("email", "").strip().lower()
     password = request.form.get("password", "")
     confirm = request.form.get("confirm_password", "")
 
+    # On an error the page is shown again with the name and email kept;
+    # only the password fields come back empty.
+    def signup_error(message):
+        flash(message, "error")
+        return render_template("login_signup.html", tab="signup", signup_name=name, signup_email=email)
+
     if not name or not email or len(password) < 8 or password != confirm:
-        flash("Please fill in all fields correctly (password must be at least 8 characters).", "error")
-        return redirect(url_for("login_page") + "#signup")
+        return signup_error("Please fill in all fields correctly (password must be at least 8 characters).")
 
     if not create_user(name, email, generate_password_hash(password)):
-        flash("That email is already registered.", "error")
-        return redirect(url_for("login_page") + "#signup")
+        return signup_error("That email is already registered.")
 
-    flash("Account created. You can log in now.", "success")
-    return redirect(url_for("login_page"))
+    # Account created: log the new user in right away.
+    user = get_user_by_email(email)
+    session.clear()
+    session["user_id"] = user["id"]
+    session["user_name"] = user["name"]
+    flash(f"Welcome to SideQuest, {user['name']}!", "success")
+    return redirect(url_for("homepage"))
 
 
 @app.route("/logout")
