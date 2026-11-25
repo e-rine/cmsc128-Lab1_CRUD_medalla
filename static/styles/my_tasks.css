@@ -217,7 +217,7 @@ h1, h2, h3, .brand { font-family: "Sora", sans-serif; }
 .task-table-header,
 .task-row {
   display: grid;
-  grid-template-columns: 32px 2fr 1.2fr 0.8fr 0.8fr 100px;
+  grid-template-columns: 32px 2fr 0.9fr 0.7fr 0.8fr 0.8fr 100px;   /* check, task, deadline, time, priority, category, buttons */
   align-items: center;
   gap: 12px;
   padding: 14px 18px;
@@ -251,6 +251,74 @@ h1, h2, h3, .brand { font-family: "Sora", sans-serif; }
 
 .task-title { font-weight: 600; font-size: 0.92rem; }
 .task-description { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+
+/* Task text stays on one line with "..." when it is long; click the task to see everything */
+.task-body { min-width: 0; cursor: pointer; }
+.task-body:hover .task-title { color: var(--primary); }
+.task-body:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 6px; }
+
+.task-title,
+.task-description {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* the Time column is grayed out so the date stands out */
+.deadline-time { color: var(--text-muted); font-size: 0.84rem; }
+
+/* ---------- Task details modal ---------- */
+.details-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.details-head h3 { margin: 0; overflow-wrap: anywhere; }
+
+.details-status {
+  flex-shrink: 0;
+  margin-top: 2px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  background: var(--bg);
+  color: var(--text-muted);
+}
+
+.details-status.done { background: rgba(26, 158, 106, 0.12); color: var(--success); }
+
+.details-description {
+  margin: 10px 0 18px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text);
+  white-space: pre-wrap;          /* keeps the line breaks you typed */
+  overflow-wrap: anywhere;
+}
+
+.details-description.empty { font-size: 0.8rem; color: var(--text-muted); opacity: 0.6; font-style: italic; }
+
+.details-list {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 10px 12px;
+  align-items: center;
+  margin: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 0.88rem;
+}
+
+.details-list dt { color: var(--text-muted); font-size: 0.8rem; }
+.details-list dd { margin: 0; }
+#details-deadline.overdue { color: var(--danger); font-weight: 600; }
+.details-when { display: flex; align-items: center; gap: 12px; }
+.details-time-label { margin-left: 20px; color: var(--text-muted); font-size: 0.8rem; }   /* same look as the "Deadline" label */
+#details-time { color: var(--text); }   /* same look as the date value */
 
 .deadline-text { font-size: 0.84rem; }
 .deadline-text.overdue { color: var(--danger); font-weight: 600; }
@@ -417,6 +485,7 @@ h1, h2, h3, .brand { font-family: "Sora", sans-serif; }
     row-gap: 6px;
   }
   .task-actions { justify-content: flex-start; }
+  .col-time { margin-top: -4px; }      /* on small windows the time sits right under the date */
 }
 
 /* Phone-sized windows only: the sidebar becomes a bar across the top */

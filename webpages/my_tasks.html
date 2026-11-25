@@ -99,18 +99,29 @@
             <span></span>
             <span>Task</span>
             <span>Deadline</span>
+            <span>Time</span>
             <span>Priority</span>
             <span>Category</span>
             <span></span>
           </div>
 
           {% for task in tasks %}
-          <article class="task-row{% if task['is_completed'] %} is-completed{% endif %}" id="task-{{ task['id'] }}">
+          <article class="task-row{% if task['is_completed'] %} is-completed{% endif %}" id="task-{{ task['id'] }}"
+                   data-title="{{ task['title'] }}"
+                   data-description="{{ task['description'] or '' }}"
+                   data-deadline="{{ task|format_deadline }}"
+                   data-deadline-date="{{ task['deadline_date'] }}"
+                   data-deadline-time="{{ task['deadline_time'] }}"
+                   data-overdue="{{ '1' if task|is_overdue else '' }}"
+                   data-priority="{{ task['priority'] }}"
+                   data-category="{{ task['category'] }}"
+                   data-done="{{ '1' if task['is_completed'] else '' }}"
+                   data-added-by="{{ task['creator_name'] if current_list and task['creator_name'] else '' }}">
             <form action="/toggle-task/{{ task['id'] }}" method="POST">
               <input type="checkbox" class="task-check" {% if task['is_completed'] %}checked{% endif %} onchange="this.form.submit()" />
             </form>
 
-            <div class="task-body">
+            <div class="task-body" role="button" tabindex="0" title="View details" data-id="{{ task['id'] }}">
               <div class="task-title">{{ task['title'] }}</div>
               {% if current_list and task['creator_name'] %}
               <div class="task-description task-added-by">Added by {{ task['creator_name'] }}</div>
@@ -120,8 +131,13 @@
               {% endif %}
             </div>
 
+            {% set when = (task|format_deadline).split(' · ') %}
             <div class="col-deadline">
-              <span class="deadline-text{% if task|is_overdue %} overdue{% endif %}">{{ task|format_deadline }}</span>
+              <span class="deadline-text{% if task|is_overdue %} overdue{% endif %}">{{ when[0] }}</span>
+            </div>
+
+            <div class="col-time">
+              <span class="deadline-time">{{ when[1] if when|length > 1 else '' }}</span>
             </div>
 
             <div class="col-status">
@@ -133,59 +149,11 @@
             </div>
 
             <div class="task-actions">
-              <button type="button" class="btn btn-ghost btn-small" data-id="{{ task['id'] }}" onclick="toggleEditForm(this.dataset.id)">Edit</button>
+              <button type="button" class="btn btn-ghost btn-small" data-id="{{ task['id'] }}" onclick="openTaskModal(this.dataset.id, true)">Edit</button>
               <button type="button" class="btn btn-ghost btn-small btn-delete" data-id="{{ task['id'] }}" data-title="{{ task['title'] }}" title="Delete task" aria-label="Delete task" onclick="openDeleteModal(this.dataset.id, this.dataset.title)">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
               </button>
             </div>
-
-            <!-- Edit form -->
-            <form class="edit-form" id="edit-form-{{ task['id'] }}" action="/edit-task/{{ task['id'] }}" method="POST">
-              <div class="form-row stack">
-                <div class="field">
-                  <label for="title-{{ task['id'] }}">Task title</label>
-                  <input type="text" id="title-{{ task['id'] }}" name="title" value="{{ task['title'] }}" required />
-                </div>
-                <div class="field">
-                  <label for="description-{{ task['id'] }}">Description</label>
-                  <textarea id="description-{{ task['id'] }}" name="description">{{ task['description'] or '' }}</textarea>
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="field">
-                  <label for="date-{{ task['id'] }}">Deadline date</label>
-                  <input type="date" id="date-{{ task['id'] }}" name="deadline_date" value="{{ task['deadline_date'] }}" required />
-                </div>
-                <div class="field">
-                  <label for="time-{{ task['id'] }}">Deadline time</label>
-                  <input type="time" id="time-{{ task['id'] }}" name="deadline_time" value="{{ task['deadline_time'] }}" required />
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="field">
-                  <label for="priority-{{ task['id'] }}">Priority</label>
-                  <select id="priority-{{ task['id'] }}" name="priority" required>
-                    <option value="low" {% if task['priority']=='low' %}selected{% endif %}>Low</option>
-                    <option value="medium" {% if task['priority']=='medium' %}selected{% endif %}>Medium</option>
-                    <option value="high" {% if task['priority']=='high' %}selected{% endif %}>High</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label for="category-{{ task['id'] }}">Category</label>
-                  <select id="category-{{ task['id'] }}" name="category" required>
-                    <option value="school" {% if task['category']=='school' %}selected{% endif %}>School</option>
-                    <option value="work" {% if task['category']=='work' %}selected{% endif %}>Work</option>
-                    <option value="personal" {% if task['category']=='personal' %}selected{% endif %}>Personal</option>
-                    <option value="finance" {% if task['category']=='finance' %}selected{% endif %}>Finance</option>
-                    <option value="other" {% if task['category']=='other' %}selected{% endif %}>Other</option>
-                  </select>
-                </div>
-              </div>
-              <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Save changes</button>
-                <button type="button" class="btn btn-ghost" data-id="{{ task['id'] }}" onclick="toggleEditForm(this.dataset.id)">Cancel</button>
-              </div>
-            </form>
           </article>
           {% else %}
           <div class="empty-state">{% if hide_done %}No open tasks. Completed tasks are hidden.{% else %}No tasks yet.{% endif %}</div>
@@ -255,6 +223,85 @@
     </div>
   </div>
 
+  <!-- Task details / edit modal (filled in by scripts/task_details.js) -->
+  <div class="modal-overlay" id="details-modal">
+    <div class="modal-box modal-wide" role="dialog" aria-modal="true" aria-labelledby="details-title">
+
+      <!-- view mode -->
+      <div id="details-view">
+        <div class="details-head">
+          <h3 id="details-title"></h3>
+          <span class="details-status" id="details-status"></span>
+        </div>
+        <p class="details-description" id="details-description"></p>
+        <dl class="details-list">
+          <dt>Deadline</dt>
+          <dd class="details-when"><span id="details-deadline"></span><span class="details-time-label">Time</span><span id="details-time"></span></dd>
+          <dt>Priority</dt>
+          <dd id="details-priority"></dd>
+          <dt>Category</dt>
+          <dd id="details-category"></dd>
+          <dt id="details-added-label">Added by</dt>
+          <dd id="details-added"></dd>
+        </dl>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeDetailsModal()">Close</button>
+          <button type="button" class="btn btn-primary" id="details-edit">Edit</button>
+        </div>
+      </div>
+
+      <!-- edit mode: same fields and route (/edit-task/<id>) as the old inline edit form -->
+      <form id="details-form" method="POST" hidden>
+        <h3>Edit task</h3>
+        <div class="form-row stack">
+          <div class="field">
+            <label for="ed-title">Task title</label>
+            <input type="text" id="ed-title" name="title" required />
+          </div>
+          <div class="field">
+            <label for="ed-description">Description</label>
+            <textarea id="ed-description" name="description"></textarea>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label for="ed-date">Deadline date</label>
+            <input type="date" id="ed-date" name="deadline_date" required />
+          </div>
+          <div class="field">
+            <label for="ed-time">Deadline time</label>
+            <input type="time" id="ed-time" name="deadline_time" required />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label for="ed-priority">Priority</label>
+            <select id="ed-priority" name="priority" required>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="ed-category">Category</label>
+            <select id="ed-category" name="category" required>
+              <option value="school">School</option>
+              <option value="work">Work</option>
+              <option value="personal">Personal</option>
+              <option value="finance">Finance</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="details-cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save changes</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
   <!-- Delete confirmation modal -->
   <div class="modal-overlay" id="delete-modal">
     <div class="modal-box">
@@ -283,5 +330,27 @@
     }
   </script>
   <script src="{{ url_for('static', filename='scripts/main.js') }}"></script>
+  <script src="{{ url_for('static', filename='scripts/task_details.js') }}"></script>
+  <script>
+    // Add-task form defaults: deadline date = today (local time), deadline time = 11:59 PM
+    function setAddTaskDefaults() {
+      var d = new Date();
+      var pad = function (n) { return String(n).padStart(2, '0'); };
+      var dateInput = document.getElementById('deadline_date');
+      var timeInput = document.getElementById('deadline_time');
+      if (dateInput) dateInput.value = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+      if (timeInput) timeInput.value = '23:59';
+    }
+    setAddTaskDefaults();
+
+    // Re-apply each time the modal opens, so the date is still "today" if the page was left open overnight
+    if (typeof openAddModal === 'function') {
+      var originalOpenAddModal = openAddModal;
+      openAddModal = function () {
+        setAddTaskDefaults();
+        return originalOpenAddModal.apply(this, arguments);
+      };
+    }
+  </script>
 </body>
 </html>
