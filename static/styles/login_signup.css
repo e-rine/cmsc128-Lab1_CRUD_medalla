@@ -68,6 +68,36 @@
 
 .auth-form .field input { width: 100%; }
 
+/* ---------- Show / hide password (eye button) ---------- */
+.pw-wrap { position: relative; display: flex; }
+
+.pw-wrap input { flex: 1; padding-right: 40px; }   /* room for the eye so long passwords don't run under it */
+
+.pw-toggle {
+  position: absolute;
+  top: 50%;
+  right: var(--space-1);
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-muted);
+  opacity: 0.5;
+  cursor: pointer;
+  transition: opacity var(--transition);
+}
+
+.pw-toggle:hover,
+.pw-toggle:focus-visible { opacity: 0.9; }
+.pw-toggle:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.pw-toggle .eye-off { display: none; }
+.pw-toggle.on .eye-on { display: none; }
+.pw-toggle.on .eye-off { display: block; }
+
 .auth-submit {
   width: 100%;
   margin-top: var(--space-1);
