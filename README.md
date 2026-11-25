@@ -2,28 +2,7 @@
 
 SideQuest is a gamified to-do list web app. Each person has their own account and private tasks, and people can also create groups to share a task list with others. Finishing tasks earns XP, levels, daily quests, streaks and color themes.
 
-**Live app:** <!-- TODO: paste your deployed URL, e.g. https://sidequest.onrender.com -->
-
-## Backend, Database and What Was Refactored
-
-**Backend:** Python with the Flask framework (Jinja templates for pages, plus JSON routes for the floating window and the group modals).
-
-**Database:** PostgreSQL in production, SQLite for quick local use. The app picks one at startup:
-
-- If the `DATABASE_URL` environment variable starts with `postgresql://` (or `postgres://`), it connects to PostgreSQL through `psycopg2`.
-- If it is not set, it falls back to a local SQLite file (`todolist.db`), so a fresh clone runs with no database setup.
-
-### What I refactored and why
-
-| Area | What changed | Why |
-|------|--------------|-----|
-| Database | Added PostgreSQL support and deployment setup. A small adapter in `backend/database.py` translates the SQLite-style SQL (`?` placeholders, `AUTOINCREMENT`, `INSERT OR IGNORE`, `datetime('now')`) into Postgres, so all queries are written once and run on both. | SQLite is a local file and is not a good fit for a hosted server. Postgres is a real database server the deployed app can connect to, and keeping SQLite working means anyone can still run the project locally without installing anything. |
-| Database round trips | Postgres connections come from a connection pool with TCP keep-alives, and a connection is only health-checked after 20 seconds idle. Settings such as the theme and "Hide completed" are stored in one `user_prefs` table, and the old `user_settings` table is migrated into it once and dropped. | Opening a new connection to a remote database on every query is slow. Reusing connections and skipping the check on busy connections means fewer round trips and faster pages. |
-| Mailer | `backend/mailer.py` now tries a Google Apps Script (Gmail), then Brevo, then plain SMTP, and finally prints the reset link in the terminal. Email is sent over HTTPS where possible. | Free hosting tiers such as Render often block SMTP ports. HTTPS-based sending works there, and the fallback chain means password reset never breaks the flow. |
-| Routing | Signup and login redirects were cleaned up. Errors re-render the page with the name and email kept, and a new account is logged in right away. | Less duplicated route logic and a smoother signup experience. |
-| UI / frontend | Reorganized the CSS into a shared base plus one stylesheet per page, made the panels fill the full window width, and replaced inline messages with toast pop-ups. Task details and editing now open in a modal, group management (create, rename, members, leave, delete) is in one modal, and I added a landing and onboarding page, a tweaked logo and a show/hide eye on password fields. | Easier to maintain and no more style modal between pages. The layout adapts to any window size, messages no longer shift the page, and tasks and groups can be managed without leaving the page. |
-| Gamification | Added quests, streaks, achievements, and levels. Themes also unlock by level. | Gives players something to work toward. |
-| Code quality | Added and edited comments on functions. | Easier for others to read and maintain. |
+**Live app:** https://sidequest-ilz2.onrender.com 
 
 ## Features
 
@@ -66,7 +45,6 @@ SideQuest is a gamified to-do list web app. Each person has their own account an
 - Manage everything from one modal: create a group (and invite members by email), rename it, add members, remove members or leave, and delete the group
 - Personal tasks are private, and group tasks are only visible to group members
 
-
 ## Notes
 
 - Password reset links last 30 minutes and only work once.
@@ -74,6 +52,27 @@ SideQuest is a gamified to-do list web app. Each person has their own account an
 - The floating window needs Chrome or Edge 116+ and a secure address (HTTPS, or `localhost` while developing).
 - Completed tasks keep the XP they earned even if they are un-ticked or deleted later.
 - Pages are sent with no-cache headers so a newly picked theme and task changes show up right away.
+
+## Backend, Database and What Was Refactored
+
+**Backend:** Python with the Flask framework (Jinja templates for pages, plus JSON routes for the floating window and the group modals).
+
+**Database:** PostgreSQL in production, SQLite for quick local use. The app picks one at startup:
+
+- If the `DATABASE_URL` environment variable starts with `postgresql://` (or `postgres://`), it connects to PostgreSQL through `psycopg2`.
+- If it is not set, it falls back to a local SQLite file (`todolist.db`), so a fresh clone runs with no database setup.
+
+### What I refactored and why
+
+| Area | What changed | Why |
+|------|--------------|-----|
+| Database | Added PostgreSQL support and deployment setup. A small adapter in `backend/database.py` translates the SQLite-style SQL (`?` placeholders, `AUTOINCREMENT`, `INSERT OR IGNORE`, `datetime('now')`) into Postgres, so all queries are written once and run on both. | SQLite is a local file and is not a good fit for a hosted server. Postgres is a real database server the deployed app can connect to, and keeping SQLite working means anyone can still run the project locally without installing anything. |
+| Database round trips | Postgres connections come from a connection pool with TCP keep-alives, and a connection is only health-checked after 20 seconds idle. Settings such as the theme and "Hide completed" are stored in one `user_prefs` table, and the old `user_settings` table is migrated into it once and dropped. | Opening a new connection to a remote database on every query is slow. Reusing connections and skipping the check on busy connections means fewer round trips and faster pages. |
+| Mailer | `backend/mailer.py` now tries a Google Apps Script (Gmail), then Brevo, then plain SMTP, and finally prints the reset link in the terminal. Email is sent over HTTPS where possible. | Free hosting tiers such as Render often block SMTP ports. HTTPS-based sending works there, and the fallback chain means password reset never breaks the flow. |
+| Routing | Signup and login redirects were cleaned up. Errors re-render the page with the name and email kept, and a new account is logged in right away. | Less duplicated route logic and a smoother signup experience. |
+| UI / frontend | Reorganized the CSS into a shared base plus one stylesheet per page, made the panels fill the full window width, and replaced inline messages with toast pop-ups. Task details and editing now open in a modal, group management (create, rename, members, leave, delete) is in one modal, and I added a landing and onboarding page, a tweaked logo and a show/hide eye on password fields. | Easier to maintain and no more style modal between pages. The layout adapts to any window size, messages no longer shift the page, and tasks and groups can be managed without leaving the page. |
+| Gamification | Added quests, streaks, achievements, and levels. Themes also unlock by level. | Gives players something to work toward. |
+| Code quality | Added and edited comments on functions. | Easier for others to read and maintain. |
 
 ## Tech Stack
 
