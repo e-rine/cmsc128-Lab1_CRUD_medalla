@@ -1,0 +1,123 @@
+/* My Quests page. Load after my_tasks.css (cards, stat cards, progress bar and page heading come from base.css). */
+
+.q-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--gap-card);
+  margin-bottom: var(--gap-card);
+}
+
+.stat-value small { font-size: var(--fs-md); color: var(--text-muted); font-weight: var(--fw-semibold); }
+.stat-value.streak-on { color: var(--streak); }
+.stat-note { font-size: var(--fs-sm); color: var(--text-muted); }
+
+.home-card { margin-bottom: var(--gap-card); }
+
+/* ---------- Daily quests ---------- */
+.quest-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.quest-row:last-of-type { border-bottom: none; }
+
+.quest-mark {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px dashed var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+}
+
+.quest-row.done .quest-mark { border: none; background: var(--success); color: #fff; }
+
+.quest-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.quest-text { font-weight: var(--fw-semibold); font-size: var(--fs-lg); }
+.quest-row.done .quest-text { color: var(--text-muted); text-decoration: line-through; }
+.quest-row.done .bar-fill { background: var(--success); }
+
+.quest-side { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; min-width: 70px; }
+.quest-progress { font-weight: var(--fw-bold); font-size: var(--fs-md); }
+.quest-reward { font-size: var(--fs-xs); font-weight: var(--fw-semibold); color: var(--primary); }
+.quest-row.done .quest-reward { color: var(--success); }
+
+/* ---------- Themes ---------- */
+.card-note-inline { font-size: var(--fs-sm); color: var(--text-muted); }
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-4);
+}
+
+.theme-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  background: var(--panel);
+}
+
+.theme-card.active { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+.theme-card.locked { opacity: 0.55; }
+
+.swatches { display: flex; }
+
+.swatches span {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--panel);
+  box-shadow: 0 0 0 1px var(--border);
+  margin-right: -6px;
+}
+
+.theme-status { font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--text-muted); }
+.theme-card.active .theme-status { color: var(--primary); }
+.theme-btn { width: 100%; height: var(--control-h-sm); padding: 0 var(--space-3); font-size: var(--fs-sm); }
+
+/* ---------- Achievements ---------- */
+.badge-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3) var(--space-6);
+}
+
+.badge { display: flex; align-items: center; gap: var(--space-3); opacity: 0.55; }
+.badge.unlocked { opacity: 1; }
+
+.badge-mark {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px dashed var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+}
+
+.badge.unlocked .badge-mark { border: none; background: var(--success); color: #fff; }
+
+.badge-text { display: flex; flex-direction: column; font-size: var(--fs-sm); color: var(--text-muted); }
+.badge-text strong { font-size: var(--fs-md); color: var(--text); }
+
+@media (max-width: 860px) {
+  .q-stats { grid-template-columns: 1fr; }
+  .badge-list { grid-template-columns: 1fr; }
+}

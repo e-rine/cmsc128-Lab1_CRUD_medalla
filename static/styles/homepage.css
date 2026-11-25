@@ -1,0 +1,224 @@
+/* Homepage / dashboard. Load after my_tasks.css (which brings in variables.css and base.css:
+   cards, stat cards, progress bar, buttons, fields, pills and flash messages all live there). */
+
+.text-danger { color: var(--danger); }
+.text-success { color: var(--success); }
+
+.home { width: 100%; }   /* uses the full width of the page; the grids below resize with it */
+
+/* ---------- Hero ---------- */
+.home-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: var(--gap-card);
+  margin-bottom: var(--gap-card);
+}
+
+.home-hero-text { flex: 1; min-width: 0; }
+
+.home-hero h1 {
+  font-size: var(--fs-hero);
+  margin: 0 0 var(--space-2);
+}
+
+.home-hero p {
+  margin: 0 0 var(--space-5);
+  color: var(--text-muted);
+}
+
+/* ---------- Level card ---------- */
+.level-card {
+  width: calc((100% - 3 * var(--gap-card)) / 4);   /* same width as one stat card below (4 columns, three gaps) */
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.level-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.level-badge {
+  background: var(--primary);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-lg);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+}
+
+.level-xp { font-size: var(--fs-sm); color: var(--text-muted); font-weight: var(--fw-medium); }
+.level-note { font-size: var(--fs-sm); color: var(--text-muted); }
+.level-card .streak-pill { align-self: flex-start; }
+
+/* ---------- Stats ---------- */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--gap-card);
+  margin-bottom: var(--gap-card);
+}
+
+/* ---------- Two columns ---------- */
+.home-columns {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: var(--gap-card);
+  align-items: start;
+}
+
+.home-col { display: flex; flex-direction: column; gap: var(--gap-card); min-width: 0; }
+
+.card-link {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.card-link:hover { text-decoration: underline; }
+
+.card-note { margin: var(--space-3) 0 0; font-size: var(--fs-sm); color: var(--text-muted); }
+
+.empty-note { margin: 0; font-size: var(--fs-md); color: var(--text-muted); }
+.empty-note a { color: var(--primary); font-weight: var(--fw-semibold); text-decoration: none; }
+
+/* ---------- Due soon ---------- */
+.due-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.due-row:last-of-type { border-bottom: none; }
+
+.due-row form { display: flex; }
+
+.due-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.due-title {
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-lg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Quick add ---------- */
+.quick-add {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr 1fr 1fr;
+  gap: var(--gap-inline);
+  align-items: end;
+}
+
+.quick-add .quick-title { grid-column: 1 / -1; }
+.quick-add .field input,
+.quick-add .field select { width: 100%; min-width: 0; }
+.quick-submit { grid-column: 1 / -1; justify-self: end; padding: 0 var(--space-8); }
+
+/* ---------- Groups ---------- */
+.group-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3);
+  margin: 0 calc(-1 * var(--space-3));
+  border-radius: var(--radius-md);
+  color: inherit;
+  text-decoration: none;
+}
+
+.group-row:hover { background: var(--bg); }
+
+.group-name { font-weight: var(--fw-semibold); font-size: var(--fs-lg); }
+
+.group-meta { font-size: var(--fs-sm); color: var(--text-muted); }
+
+.group-meta em {
+  font-style: normal;
+  font-weight: var(--fw-semibold);
+  color: var(--primary);
+  margin-left: var(--space-2);
+}
+
+/* ---------- Daily quests summary ---------- */
+.quest-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+
+.streak-pill {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--bg);
+  color: var(--text-muted);
+}
+
+.streak-pill.on { background: var(--streak-soft); color: var(--streak); }
+
+.quest-count { font-size: var(--fs-sm); color: var(--text-muted); }
+
+.mini-quests {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.mini-quest {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--fs-md);
+}
+
+.mini-mark {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px dashed var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+}
+
+.mini-quest.done .mini-mark { border: none; background: var(--success); color: #fff; }
+.mini-quest.done .mini-text { color: var(--text-muted); text-decoration: line-through; }
+.mini-text { flex: 1; min-width: 0; }
+.mini-progress { font-size: var(--fs-sm); color: var(--text-muted); font-weight: var(--fw-semibold); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 960px) {
+  .home-columns { grid-template-columns: 1fr; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .home-hero { flex-direction: column; }
+  .level-card { width: 100%; }
+}
+
+@media (max-width: 560px) {
+  .quick-add { grid-template-columns: 1fr 1fr; }
+}

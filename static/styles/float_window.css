@@ -1,0 +1,276 @@
+/* Styles for the floating task window (loaded inside the pop-out window by float.js).
+   Colors come from the same variables as the main app, so theme carries over. */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg, #f5f6fa);
+  color: var(--text, #1f2430);
+  font: 14px/1.35 "Inter", system-ui, sans-serif;
+}
+
+.wrap { display: flex; flex-direction: column; height: 100vh; }
+
+/* header */
+.head {
+  padding: 12px 14px 10px;
+  background: var(--panel, #fff);
+  border-bottom: 1px solid var(--border, #e5e7ee);
+}
+.row1 { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.brand { font-weight: 700; font-size: 15px; }
+.pills { display: flex; gap: 6px; font-size: 12px; font-weight: 600; }
+.pill {
+  background: var(--primary-soft, rgba(79, 70, 229, 0.1));
+  color: var(--primary, #4f46e5);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+.bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--border, #e5e7ee);
+  margin-top: 9px;
+  overflow: hidden;
+}
+.bar i {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--primary, #4f46e5);
+  border-radius: 999px;
+  transition: width 0.3s;
+}
+
+/* filters */
+.filters {
+  padding: 10px 14px 8px;
+  background: var(--panel, #fff);
+  border-bottom: 1px solid var(--border, #e5e7ee);
+}
+.frow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ffield { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ffield span { font-size: 11px; font-weight: 500; color: var(--text-muted, #6b7280); }
+.ffield select {
+  width: 100%;
+  border: 1px solid var(--border, #e5e7ee);
+  border-radius: 8px;
+  padding: 5px 4px;
+  font: inherit;
+  font-size: 12.5px;
+  background: var(--panel, #fff);
+  color: var(--text, #1f2430);
+}
+.filters[hidden] { display: none; }
+.toolrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px 0;
+}
+.toolrow .count { flex: 1; min-width: 0; padding: 0; }
+.ftoggle {
+  position: relative;
+  display: flex;
+  margin-left: auto;   /* pushes the arrow to the right */
+  align-items: center;
+  gap: 2px;
+  padding: 3px 6px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted, #6b7280);
+  cursor: pointer;
+}
+.ftoggle:hover { color: var(--primary, #4f46e5); background: var(--primary-soft, rgba(79, 70, 229, 0.1)); }
+.ftoggle.on::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary, #4f46e5);
+}
+.fclear {
+  display: block;
+  margin: 8px 0 0 auto;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary, #4f46e5);
+  cursor: pointer;
+}
+.fclear:hover { text-decoration: underline; }
+.fclear[hidden] { display: none; }
+.fhide {
+  margin-top: 10px;   /* breathing room under the filter boxes */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted, #6b7280);
+  cursor: pointer;
+  user-select: none;
+}
+.fhide input { width: 14px; height: 14px; margin: 0; cursor: pointer; accent-color: var(--primary, #4f46e5); }
+
+/* task list */
+.count {
+  padding: 10px 14px 2px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, #6b7280);
+}
+.list { flex: 1; overflow-y: auto; padding: 4px 10px 80px; }   /* extra bottom space so the + button never covers the last task */
+
+.task {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 8px;
+  border-radius: 8px;
+  transition: opacity 0.25s, background 0.15s;
+}
+.task:hover { background: var(--panel, #fff); }
+.task.done .t b { text-decoration: line-through; color: var(--text-muted, #6b7280); font-weight: 500; }
+.task.done .t small { text-decoration: line-through; }
+.task.done .dot { opacity: 0.35; }
+.task input {
+  width: 17px;
+  height: 17px;
+  margin: 2px 0 0;
+  cursor: pointer;
+  accent-color: var(--primary, #4f46e5);
+  flex-shrink: 0;
+}
+.t { min-width: 0; flex: 1; }
+.t b { display: block; font-weight: 600; font-size: 13.5px; overflow-wrap: anywhere; }
+.t small { font-size: 12px; color: var(--text-muted, #6b7280); }
+.t small.late { color: var(--danger, #e0483f); font-weight: 600; }
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+  background: var(--text-muted, #6b7280);
+}
+.dot.medium { background: #d99e00; }
+.dot.high { background: var(--danger, #e0483f); }
+
+.empty {
+  text-align: center;
+  color: var(--text-muted, #6b7280);
+  padding: 34px 10px;
+  font-size: 13px;
+}
+.empty.err { color: var(--danger, #e0483f); }
+
+/* floating "+" button in the bottom-right corner (opens the add-task popup) */
+.addbar {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 5;
+}
+.addbtn {
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 14px;
+  padding: 0 0 3px;          /* the + sign sits optically centered */
+  background: var(--primary, #4f46e5);
+  color: #fff;
+  font: inherit;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+}
+.addbtn:hover { background: var(--primary-dark, #4338ca); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3); }
+.addbtn:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25); }
+
+/* add-task popup inside the window */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 17, 26, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  z-index: 10;
+}
+.overlay[hidden] { display: none; }
+.addform {
+  width: 100%;
+  background: var(--panel, #fff);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+.addform h3 { margin: 0; font-size: 15px; }
+.frow2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ffield input {
+  width: 100%;
+  border: 1px solid var(--border, #e5e7ee);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 13px;
+  background: var(--panel, #fff);
+  color: var(--text, #1f2430);
+}
+.ferr { color: var(--danger, #e0483f); font-size: 12px; font-weight: 600; }
+.ferr[hidden] { display: none; }
+.addactions { display: flex; justify-content: flex-end; gap: 8px; }
+.gbtn, .pbtn {
+  border-radius: 8px;
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.gbtn { border: 1px solid var(--border, #e5e7ee); background: transparent; color: var(--text-muted, #6b7280); }
+.gbtn:hover { background: var(--bg, #f5f6fa); }
+.pbtn { border: none; background: var(--primary, #4f46e5); color: #fff; }
+.pbtn:hover { background: var(--primary-dark, #4338ca); }
+.pbtn:disabled { opacity: 0.6; cursor: default; }
+
+/* message after adding / completing a task: same look as the flash messages on the main page
+   (soft green with green text; red for errors). The background is solid so the list doesn't show through. */
+.toast {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 80px;
+  z-index: 20;
+  background: #e1f2ec;
+  color: var(--success, #1a9e6a);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  display: none;
+}
+.toast.err { background: #fbe7e5; color: var(--danger, #e0483f); }
+.toast.show { display: block; }

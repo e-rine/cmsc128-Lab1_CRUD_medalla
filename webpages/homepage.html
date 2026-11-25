@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title> SideQuest | Home </title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/my_tasks.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/homepage.css') }}" />
+</head>
+<body>
+
+  <div class="app-shell">
+
+    {% include 'sidebar.html' %}
+
+    <div class="content">
+
+      <div class="topbar topbar-compact">
+        <div class="topbar-date">{{ today_label }}</div>
+      </div>
+
+      <main class="home">
+
+        <!-- Greeting + level -->
+        <section class="home-hero">
+          <div class="home-hero-text">
+            <h1>{{ greeting }}, {{ session.get('user_name') }}</h1>
+            {% if stats.overdue %}
+              <p>You have <strong class="text-danger">{{ stats.overdue }} overdue</strong> task{{ '' if stats.overdue == 1 else 's' }}. Let's clear {{ 'it' if stats.overdue == 1 else 'them' }} first.</p>
+            {% elif stats.pending %}
+              <p>You have <strong>{{ stats.pending }}</strong> task{{ '' if stats.pending == 1 else 's' }} left on your list. Nothing is overdue.</p>
+            {% elif stats.total %}
+              <p>Every task is done. Nice work.</p>
+            {% else %}
+              <p>Add your first task to start your quest.</p>
+            {% endif %}
+            <a href="/my-tasks" class="btn btn-primary home-cta">Go to My Tasks</a>
+          </div>
+
+          <div class="level-card">
+            <div class="level-top">
+              <span class="level-badge">Lv {{ level_info.level }}</span>
+              <span class="level-xp">{{ level_info.xp }} XP total</span>
+            </div>
+            <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="{{ level_info.xp_per_level }}" aria-valuenow="{{ level_info.xp_in_level }}">
+              <div class="bar-fill" data-width="{{ level_info.xp_in_level }}"></div>
+            </div>
+            <span class="level-note">{{ level_info.xp_per_level - level_info.xp_in_level }} XP to level {{ level_info.level + 1 }}</span>
+            <span class="streak-pill{% if streak %} on{% endif %}">&#128293; {{ streak }} day streak</span>
+          </div>
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for category, message in messages %}
+            <div class="flash-message flash-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endwith %}
+
+        <!-- Stats -->
+        <section class="stat-grid">
+          <div class="stat-card">
+            <span class="stat-label">Total tasks</span>
+            <span class="stat-value">{{ stats.total }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Completed</span>
+            <span class="stat-value text-success">{{ stats.completed }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Pending</span>
+            <span class="stat-value">{{ stats.pending }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Overdue</span>
+            <span class="stat-value{% if stats.overdue %} text-danger{% endif %}">{{ stats.overdue }}</span>
+          </div>
+        </section>
+
+        <div class="home-columns">
+
+          <!-- LEFT: due soon + quick add -->
+          <div class="home-col">
+
+            <section class="home-card">
+              <div class="card-head">
+                <h2>Due soon</h2>
+                <a href="/my-tasks" class="card-link">View all</a>
+              </div>
+
+              {% for task in due_soon[:3] %}   {# show at most 3 #}
+              <div class="due-row{% if task|is_overdue %} is-overdue{% endif %}">
+                <form action="/toggle-task/{{ task['id'] }}" method="POST">
+                  <input type="checkbox" class="task-check" title="Mark as done" onchange="this.form.submit()" />
+                </form>
+                <div class="due-main">
+                  <span class="due-title">{{ task['title'] }}</span>
+                  <span class="deadline-text{% if task|is_overdue %} overdue{% endif %}">
+                    {% if task|is_overdue %}Overdue &middot; {% endif %}{{ task|format_deadline }}
+                  </span>
+                </div>
+                <span class="priority-pill priority-{{ task['priority'] }}">{{ task['priority']|capitalize }}</span>
+              </div>
+              {% else %}
+              <p class="empty-note">
+                {% if stats.total %}You're all caught up. Nothing is due.{% else %}No tasks yet. Add one below.{% endif %}
+              </p>
+              {% endfor %}
+            </section>
+
+            <section class="home-card">
+              <div class="card-head"><h2>Quick add</h2></div>
+              <form action="/add-task" method="POST" class="quick-add">
+                <div class="field quick-title">
+                  <label for="qa-title">Task</label>
+                  <input type="text" id="qa-title" name="title" placeholder="What needs doing?" required />
+                </div>
+                <div class="field">
+                  <label for="qa-date">Date</label>
+                  <input type="date" id="qa-date" name="deadline_date" value="{{ today_iso }}" required />
+                </div>
+                <div class="field">
+                  <label for="qa-time">Time</label>
+                  <input type="time" id="qa-time" name="deadline_time" value="23:59" required />
+                </div>
+                <div class="field">
+                  <label for="qa-priority">Priority</label>
+                  <select id="qa-priority" name="priority">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="qa-category">Category</label>
+                  <select id="qa-category" name="category">
+                    <option value="school">School</option>
+                    <option value="work">Work</option>
+                    <option value="personal">Personal</option>
+                    <option value="finance">Finance</option>
+                    <option value="other" selected>Other</option>
+                  </select>
+                </div>
+                <button type="submit" class="btn btn-primary quick-submit">Add</button>
+              </form>
+            </section>
+
+          </div>
+
+          <!-- RIGHT: daily quests, progress -->
+          <div class="home-col">
+
+            <section class="home-card">
+              <div class="card-head">
+                <h2>Daily quests</h2>
+                <a href="/quests" class="card-link">My Quests</a>
+              </div>
+              <div class="quest-summary">
+                <span class="streak-pill{% if streak %} on{% endif %}">{{ streak }} day streak</span>
+                <span class="quest-count">{{ quests_done }}/{{ quests_total }} done today</span>
+              </div>
+              <ul class="mini-quests">
+                {% for q in quests %}
+                <li class="mini-quest{% if q.done %} done{% endif %}">
+                  <span class="mini-mark">{{ '✓' if q.done else '' }}</span>
+                  <span class="mini-text">{{ q.text }}</span>
+                  <span class="mini-progress">{{ q.progress }}/{{ q.goal }}</span>
+                </li>
+                {% endfor %}
+              </ul>
+            </section>
+
+            <section class="home-card">
+              <div class="card-head">
+                <h2>Completion rate</h2>
+                <span class="percent">{{ stats.percent }}%</span>
+              </div>
+              <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ stats.percent }}">
+                <div class="bar-fill" data-width="{{ stats.percent }}"></div>
+              </div>
+              <p class="card-note">
+                {% if stats.total %}{{ stats.completed }} of {{ stats.total }} tasks done.{% else %}Nothing to measure yet.{% endif %}
+              </p>
+            </section>
+
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('[data-width]').forEach(function (el) { el.style.width = el.dataset.width + '%'; });
+    document.querySelectorAll('[data-color]').forEach(function (el) { el.style.background = el.dataset.color; });
+  </script>
+</body>
+</html>

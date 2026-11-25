@@ -1,0 +1,158 @@
+/* Sidebar: the left navigation used on every page after login.
+   Included by sidebar.html, so it loads wherever the sidebar does.
+   Colors and sizes come from variables.css (and the chosen theme). */
+
+.sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  padding: var(--space-6) var(--space-5) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  position: sticky;      /* stays pinned to the screen while the page scrolls */
+  top: 0;
+  height: 100vh;
+  align-self: flex-start;
+}
+
+/* .brand and .brand-mark (logo + name) live in base.css so every page shares them */
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* nav links and "Log out" share one size, the same height as buttons and inputs */
+.sidebar-nav a,
+.sidebar-logout {
+  display: flex;
+  align-items: center;
+  min-height: var(--control-h);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+}
+
+.sidebar-nav a { font-size: var(--fs-lg); }
+
+.sidebar-nav a:hover,
+.sidebar-logout:hover { background: var(--bg); }
+
+.sidebar-nav a.active {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.sidebar-logout:hover { color: var(--danger); }
+
+.sidebar-foot {
+  margin-top: auto;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.sidebar-account {
+  margin-top: auto;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  min-width: 0;
+}
+
+a.sidebar-user {
+  color: inherit;
+  text-decoration: none;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+a.sidebar-user:hover { background: var(--bg); border-color: var(--primary); }
+
+a.sidebar-user.active {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+}
+
+.sidebar-userinfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.sidebar-userhint {
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.sidebar-avatar {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+}
+
+.sidebar-username {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* "Pop out tasks" sits under the nav links, separated by a thin line (see float.css) */
+
+/* Medium windows: the sidebar stays on the left, just a bit slimmer */
+@media (max-width: 860px) {
+  .sidebar { width: var(--sidebar-w-md); padding: var(--space-6) var(--space-4) var(--space-3); }
+}
+
+/* Phone-sized windows only: the sidebar becomes a bar across the top */
+@media (max-width: 560px) {
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+    position: static;
+    height: auto;
+    padding: var(--space-4) var(--space-5);
+  }
+  .brand { margin-bottom: 0; }
+  .sidebar-nav { flex-direction: row; flex-wrap: wrap; gap: 2px; }
+  .sidebar-foot { display: none; }
+  .sidebar-account {
+    margin-top: 0;
+    margin-left: auto;
+    padding-top: 0;
+    border-top: none;
+    flex-direction: row;
+    align-items: center;
+  }
+  .sidebar-userinfo { display: none; }
+}

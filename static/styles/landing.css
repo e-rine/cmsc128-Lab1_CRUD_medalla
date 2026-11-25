@@ -1,0 +1,229 @@
+/* Welcome / onboarding page (index.html). Load after my_tasks.css; colors come from the theme variables. */
+
+.landing { background: var(--bg); }
+
+/* ---------- Navbar ---------- */
+.l-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-6);
+}
+
+.l-brand {
+  margin-bottom: 0;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.l-links { display: flex; gap: var(--space-8); }
+.l-links a { color: var(--text); text-decoration: none; font-weight: var(--fw-medium); }
+.l-links a:hover { color: var(--primary); }
+.l-nav-actions { display: flex; gap: var(--space-3); }
+.l-nav-actions .btn-ghost { background: var(--panel); color: var(--primary); }
+
+/* ---------- Hero panel ---------- */
+.l-hero {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  max-width: 1280px;
+  min-height: 720px;
+  margin: 0 var(--space-4);
+  padding: var(--space-10) var(--space-6) var(--space-16);
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  background:
+    radial-gradient(ellipse at center, var(--panel) 25%, transparent 75%),
+    radial-gradient(var(--border) 1.4px, transparent 1.4px) 0 0 / 16px 16px,
+    var(--bg);
+}
+
+@media (min-width: 1312px) { .l-hero { margin: 0 auto; } }
+
+.l-hero-center {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 680px;
+  padding-top: var(--space-6);
+}
+
+.l-tile {
+  display: grid;
+  place-items: center;
+  margin-bottom: var(--space-6);
+}
+
+
+
+.l-hero h1 {
+  font-size: clamp(2.2rem, 5.5vw, 4rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--space-5);
+}
+
+.l-hero h1 span { color: var(--primary); }
+
+.l-sub {
+  margin: 0 0 var(--space-6);
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.l-trust {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+}
+
+.l-avatars { display: flex; }
+
+.l-avatars i {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-left: -6px;
+  border: 2px solid var(--panel);
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font: var(--fw-bold) 0.7rem var(--font-body);
+}
+
+.l-avatars i:first-child { margin-left: 0; }
+
+.l-cta {
+  height: var(--control-h-lg);
+  padding: 0 var(--space-10);
+  font-size: var(--fs-lg);
+  box-shadow: 0 8px 24px var(--primary-soft);
+}
+
+.l-note { margin-top: var(--space-4); font-size: var(--fs-sm); font-weight: var(--fw-semibold); }
+
+/* ---------- Floating app cards ---------- */
+.fc {
+  position: absolute;
+  z-index: 1;
+  padding: var(--space-3);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 32px rgba(17, 24, 39, 0.1);
+  font-size: var(--fs-sm);
+}
+
+.fc b { display: block; margin-bottom: var(--space-2); font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+.fc .bar { margin: var(--space-2) 0; }
+.fc-row { display: flex; align-items: center; gap: var(--space-2); padding: 5px 0; white-space: nowrap; }
+.fc-row + .fc-row { border-top: 1px solid var(--border); }
+.fc-row .priority-pill, .fc-row .category-pill { margin-left: auto; }
+
+.chk {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+}
+
+.chk.on { background: var(--success); border-color: var(--success); }
+.done { color: var(--text-muted); text-decoration: line-through; }
+
+.fc-tl { top: 36px; left: 36px; width: 190px; }
+.fc-tr { top: 36px; right: 36px; width: 180px; }
+.fc-ml { top: 270px; left: 52px; width: 170px; }
+.fc-mr { top: 270px; right: 52px; width: 170px; }
+.fc-bl { bottom: 40px; left: -20px; width: 340px; transform: rotate(-6deg); }
+.fc-br { bottom: 50px; right: -20px; width: 320px; transform: rotate(6deg); }
+
+.l-chips {
+  position: absolute;
+  z-index: 1;
+  bottom: 36px;
+  left: 50%;
+  display: flex;
+  gap: var(--space-4);
+  transform: translateX(-50%);
+}
+
+.l-chips span {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(17, 24, 39, 0.12);
+  font-size: 1.4rem;
+}
+
+.l-chips span:nth-child(odd) { transform: translateY(-10px) rotate(-6deg); }
+.l-chips span:nth-child(even) { transform: translateY(8px) rotate(6deg); }
+
+/* ---------- Features ---------- */
+.l-features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--gap-card);
+  max-width: 1280px;
+  margin: var(--space-10) auto 0;
+  padding: 0 var(--space-6) var(--space-16);
+}
+
+.l-features h2 { font-size: var(--fs-card-title); margin: 0 0 var(--space-2); }
+.l-features p { margin: 0; color: var(--text-muted); font-size: var(--fs-md); line-height: 1.5; }
+.l-features .l-icon { font-size: 1.6rem; margin-bottom: var(--space-3); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+  .fc-ml, .fc-mr { display: none; }
+  .fc-bl { left: -80px; }
+  .fc-br { right: -80px; }
+}
+
+@media (max-width: 860px) {
+  .fc, .l-chips { display: none; }
+  .l-links { display: none; }
+  .l-hero { min-height: 0; padding-bottom: var(--space-10); }
+  .l-features { grid-template-columns: 1fr; }
+}
+
+/* level badge and streak pill (same look as the homepage; homepage.css isn't loaded here) */
+.level-badge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--primary);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-md);
+}
+
+.streak-pill {
+  display: inline-block;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--bg);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+}
+
+.streak-pill.on { background: var(--streak-soft); color: var(--streak); }

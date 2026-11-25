@@ -1,0 +1,86 @@
+/* Profile page, and the cards the Groups page reuses (.profile-card, .card-note).
+   Card background, border and corners come from base.css. */
+
+.profile-card {
+  margin-bottom: var(--gap-card);
+  max-width: var(--content-narrow);
+}
+
+.profile-card h3 {
+  font-size: var(--fs-card-title);
+  margin: 0 0 var(--space-1);
+}
+
+.card-note {
+  margin: 0 0 var(--space-4);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+/* ---------- Header ---------- */
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--gap-card);
+}
+
+.profile-avatar {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: var(--fw-bold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-identity { min-width: 0; flex: 1; }
+
+.profile-identity h2 {
+  font-size: 1.25rem;
+  margin: 0 0 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-identity p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-md);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-since {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.profile-logout { display: inline-flex; }
+
+/* ---------- Forms ---------- */
+.profile-card .flash-message { margin-bottom: var(--space-4); }
+
+.profile-card form .form-row:last-of-type { margin-bottom: var(--space-4); }
+
+/* jump-to-section links land with some breathing room */
+.profile-card[id] { scroll-margin-top: var(--space-5); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 640px) {
+  .profile-card .form-row { flex-direction: column; }
+}
+
+@media (max-width: 480px) {
+  .profile-header { flex-wrap: wrap; }
+  .profile-logout { width: 100%; }
+}

@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title> SideQuest | My Groups </title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/my_tasks.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/profile.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/groups.css') }}" />
+</head>
+<body>
+
+  <div class="app-shell">
+
+    {% include 'sidebar.html' %}
+
+    <div class="content">
+
+      <div class="topbar topbar-compact">
+        <div class="topbar-date" id="topbar-date"></div>
+      </div>
+
+      <main>
+        <div class="page-heading-row">
+          <div class="page-heading">
+            <h1>My Groups</h1>
+            <p>Create a collaborative To-Do-List and add people by email.</p>
+          </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for category, message in messages %}
+            <div class="flash-message flash-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endwith %}
+
+        <section class="filter-bar">
+          <div class="filter-bar-form">
+            {% if groups %}
+            <!-- Live search: filters the group cards below as you type -->
+            <div class="field filter-search">
+              <label for="group-search">Search</label>
+              <input type="search" id="group-search" placeholder="Search groups..." autocomplete="off" />
+            </div>
+            {% endif %}
+            <button type="button" class="btn btn-primary filter-add" onclick="openCreateModal()">+ Create group</button>
+          </div>
+        </section>
+
+        <!-- Groups you belong to -->
+        {% for g in groups %}
+        <section class="profile-card group-card" id="group-{{ g['id'] }}">
+          <div class="group-info">
+            <h3><a class="group-title-link" href="/my-tasks?list={{ g['id'] }}" title="Open tasks">{{ g['name'] }}</a></h3>
+            <p class="card-note">
+              {% if g['is_owner'] %}You own this group{% else %}Owned by {{ g['owner_name'] }}{% endif %}
+              &middot; {{ g['member_count'] }} member{{ '' if g['member_count'] == 1 else 's' }}
+            </p>
+
+            <!-- Source for the members popup (not shown on the card) -->
+            <ul class="member-list gm-hidden">
+              {% for m in g['members'] %}
+              {# The owner can remove anyone except themselves; other members can only remove themselves (leave). #}
+              {% set can_remove = (not m['is_owner']) and (g['is_owner'] or m['id'] == session['user_id']) %}
+              <li{% if can_remove %} class="has-action"{% endif %}>
+                <strong>{{ m['name'] }}</strong>
+                <span>{{ m['email'] }}</span>
+                {% if m['is_owner'] %}<em>Owner</em>{% endif %}
+                {% if can_remove %}
+                <button type="button" class="member-remove-btn"
+                        data-group-id="{{ g['id'] }}" data-group-name="{{ g['name'] }}"
+                        data-member-id="{{ m['id'] }}" data-member-name="{{ m['name'] }}"
+                        data-self="{{ '1' if m['id'] == session['user_id'] else '0' }}"
+                        onclick="openRemoveMemberModal(this)">
+                  {{ 'Leave' if m['id'] == session['user_id'] else 'Remove' }}
+                </button>
+                {% endif %}
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          <div class="group-side">
+            <div class="group-hover-actions">
+              {% if g['is_owner'] %}
+              <button type="button" class="btn btn-primary group-btn"
+                      data-id="{{ g['id'] }}" data-name="{{ g['name'] }}" data-owner="1"
+                      onclick="openManageModal(this)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                Manage group
+              </button>
+              {% else %}
+              <button type="button" class="btn btn-ghost group-btn"
+                      data-id="{{ g['id'] }}" data-name="{{ g['name'] }}" data-owner="0"
+                      onclick="openManageModal(this)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                See members
+              </button>
+              <button type="button" class="btn btn-ghost group-btn"
+                      data-group-id="{{ g['id'] }}" data-group-name="{{ g['name'] }}"
+                      data-member-id="{{ session['user_id'] }}" data-member-name="You" data-self="1"
+                      onclick="openRemoveMemberModal(this)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                Leave group
+              </button>
+              {% endif %}
+            </div>
+            {% if g['is_owner'] %}
+            <button type="button" class="group-delete-btn" title="Delete group" aria-label="Delete group {{ g['name'] }}"
+                    data-id="{{ g['id'] }}" data-name="{{ g['name'] }}"
+                    onclick="openDeleteModal(this.dataset.id, this.dataset.name)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                <path d="M10 11v6"></path>
+                <path d="M14 11v6"></path>
+                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+              </svg>
+            </button>
+            {% endif %}
+          </div>
+        </section>
+        {% else %}
+        <section class="profile-card">
+          <p class="card-note">You're not in any groups yet. Create one above, or ask someone to add you.</p>
+        </section>
+        {% endfor %}
+
+        <section class="profile-card" id="search-empty" style="display: none;">
+          <p class="card-note">No groups match your search.</p>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Create group modal -->
+  <div class="gm-overlay" id="create-modal">
+    <div class="gm-box">
+      <h3>Create a group</h3>
+      <p class="card-note">You'll be the owner. Members are optional and can be added later.</p>
+      <form action="/groups/create" method="POST">
+        <div class="field">
+          <label for="group-name">Group name</label>
+          <input type="text" id="group-name" name="name" placeholder="e.g. Nikko's Group List" maxlength="50" required />
+        </div>
+
+        <label class="gm-members-label">Add members by email (optional)</label>
+        <div id="member-rows"></div>
+        <button type="button" class="btn btn-ghost" onclick="addMemberRow()">+ Add another</button>
+
+        <div class="gm-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('create-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create group</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add member modal (for an existing group) -->
+  <div class="gm-overlay" id="add-member-modal">
+    <div class="gm-box">
+      <h3>Add a member</h3>
+      <p class="card-note" id="add-member-note"></p>
+      <form id="add-member-form" method="POST">
+        <div class="field">
+          <label for="member-email">Email</label>
+          <input type="email" id="member-email" name="email" placeholder="friend@example.com" required />
+        </div>
+        <!-- extra email boxes are added here by the script at the bottom of the page -->
+        <div id="add-member-extra"></div>
+        <button type="button" class="btn btn-ghost" id="add-member-another">+ Add another</button>
+        <div class="gm-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('add-member-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add member</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Members modal -->
+  <div class="gm-overlay" id="members-modal">
+    <div class="gm-box">
+      <h3 id="members-title">Members</h3>
+      <p class="card-note" id="members-note"></p>
+      <ul class="member-list" id="members-list"></ul>
+      <div class="gm-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('members-modal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manage group modal: rename, see members, remove members and add members in one place -->
+  <div class="gm-overlay" id="manage-modal">
+    <div class="gm-box gm-manage" role="dialog" aria-modal="true" aria-labelledby="manage-title">
+      <h3 id="manage-title">Manage group</h3>
+      <p class="card-note" id="manage-note"></p>
+      <div class="gm-error" id="manage-error" hidden></div>
+
+      <!-- owner only -->
+      <div class="gm-section" id="manage-rename-section">
+        <div class="gm-section-title">Group name</div>
+        <div class="gm-inline-row">
+          <div class="field">
+            <input type="text" id="manage-name" maxlength="50" aria-label="Group name" />
+          </div>
+          <button type="button" class="btn btn-primary" id="manage-rename-btn">Save name</button>
+        </div>
+      </div>
+
+      <div class="gm-section">
+        <div class="gm-section-title">Members</div>
+        <ul class="member-list" id="manage-members"></ul>
+      </div>
+
+      <!-- owner only -->
+      <div class="gm-section" id="manage-add-section">
+        <div class="gm-section-title">Add members by email</div>
+        <div id="manage-add-rows"></div>
+        <div class="gm-inline-row gm-add-actions">
+          <button type="button" class="btn btn-ghost" id="manage-add-another">+ Add another</button>
+          <button type="button" class="btn btn-primary" id="manage-add-btn">Add</button>
+        </div>
+      </div>
+
+      <div class="gm-actions">
+        <button type="button" class="btn btn-ghost" id="manage-close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete group modal -->
+  <div class="gm-overlay" id="delete-modal">
+    <div class="gm-box">
+      <h3>Delete group?</h3>
+      <p class="card-note" id="delete-note"></p>
+      <form id="delete-form" method="POST">
+        <div class="gm-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('delete-modal')">Cancel</button>
+          <button type="submit" class="btn btn-danger">Delete group</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Remove member / leave group modal -->
+  <div class="gm-overlay" id="remove-member-modal">
+    <div class="gm-box">
+      <h3 id="remove-member-title">Remove member?</h3>
+      <p class="card-note" id="remove-member-note"></p>
+      <form id="remove-member-form" method="POST">
+        <div class="gm-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('remove-member-modal')">Cancel</button>
+          <button type="submit" class="btn btn-danger" id="remove-member-submit">Remove</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='scripts/groups.js') }}"></script>
+  <script>
+    // "Manage group" modal: rename, member list (with Remove / Leave) and add members, all in one popup.
+    // It reads the member list from the hidden <ul> inside each group card, and talks to the same
+    // routes as before (/groups/<id>/rename and /groups/<id>/members). Errors show inside the popup.
+    (function () {
+      var modal = document.getElementById('manage-modal');
+      if (!modal) return;
+      var title = document.getElementById('manage-title');
+      var note = document.getElementById('manage-note');
+      var errBox = document.getElementById('manage-error');
+      var renameSection = document.getElementById('manage-rename-section');
+      var addSection = document.getElementById('manage-add-section');
+      var nameInput = document.getElementById('manage-name');
+      var renameBtn = document.getElementById('manage-rename-btn');
+      var membersList = document.getElementById('manage-members');
+      var rows = document.getElementById('manage-add-rows');
+      var addAnother = document.getElementById('manage-add-another');
+      var addBtn = document.getElementById('manage-add-btn');
+      var currentId = null;
+
+      function showError(msg) { errBox.textContent = msg; errBox.hidden = false; }
+      function clearError() { errBox.textContent = ''; errBox.hidden = true; }
+
+      function addRow(focus, removable) {
+        var row = document.createElement('div');
+        row.className = 'gm-member-row';
+        var field = document.createElement('div');
+        field.className = 'field';
+        var input = document.createElement('input');
+        input.type = 'email';
+        input.placeholder = 'friend@example.com';
+        input.setAttribute('aria-label', 'Email');
+        field.appendChild(input);
+        row.appendChild(field);
+        if (removable) {
+          var remove = document.createElement('button');
+          remove.type = 'button';
+          remove.className = 'gm-remove';
+          remove.title = 'Remove this email';
+          remove.setAttribute('aria-label', 'Remove this email');
+          remove.textContent = '\u00d7';
+          remove.addEventListener('click', function () { row.remove(); });
+          row.appendChild(remove);
+        }
+        rows.appendChild(row);
+        if (focus) input.focus();
+      }
+
+      function send(url, data, buttons) {
+        clearError();
+        buttons.forEach(function (b) { b.disabled = true; });
+        fetch(url, { method: 'POST', body: data, headers: { 'X-Requested-With': 'fetch' } })
+          .then(function (res) {
+            return res.json().then(function (json) { return { ok: res.ok, json: json }; });
+          })
+          .then(function (r) {
+            if (r.ok && r.json.ok) { window.location = r.json.redirect || '/groups'; return; }
+            showError(r.json.error || 'Something went wrong. Please try again.');
+            buttons.forEach(function (b) { b.disabled = false; });
+          })
+          .catch(function () {
+            showError('Something went wrong. Please try again.');
+            buttons.forEach(function (b) { b.disabled = false; });
+          });
+      }
+
+      function closeManage() { modal.classList.remove('open'); }
+
+      window.openManageModal = function (btn) {
+        var id = btn.dataset.id;
+        var isOwner = btn.dataset.owner === '1';
+        var card = document.getElementById('group-' + id);
+        if (!card) return;
+        currentId = id;
+        clearError();
+
+        title.textContent = btn.dataset.name;
+        var cardNote = card.querySelector('.card-note');
+        note.textContent = cardNote ? cardNote.textContent.replace(/\s+/g, ' ').trim() : '';
+
+        // copy the members (and their Remove / Leave buttons) from the hidden list in the card
+        membersList.textContent = '';
+        var source = card.querySelector('.member-list');
+        if (source) {
+          Array.prototype.forEach.call(source.children, function (li) {
+            membersList.appendChild(li.cloneNode(true));
+          });
+        }
+
+        renameSection.hidden = !isOwner;
+        addSection.hidden = !isOwner;
+        nameInput.value = btn.dataset.name;
+        rows.textContent = '';
+        addRow(false, false);
+        renameBtn.disabled = false;
+        addBtn.disabled = false;
+
+        modal.classList.add('open');
+        if (isOwner) { nameInput.focus(); nameInput.select(); }
+      };
+
+      renameBtn.addEventListener('click', function () {
+        var name = nameInput.value.trim();
+        if (!name) { showError("Group name can't be empty."); return; }
+        var data = new FormData();
+        data.append('name', name);
+        send('/groups/' + currentId + '/rename', data, [renameBtn]);
+      });
+
+      addBtn.addEventListener('click', function () {
+        var data = new FormData();
+        var count = 0;
+        Array.prototype.forEach.call(rows.querySelectorAll('input'), function (input) {
+          var v = input.value.trim();
+          if (v) { data.append('email', v); count++; }
+        });
+        if (!count) { showError('Enter at least one email.'); return; }
+        send('/groups/' + currentId + '/members', data, [addBtn, addAnother]);
+      });
+
+      addAnother.addEventListener('click', function () { addRow(true, true); });
+
+      // Enter submits whichever section you're typing in
+      nameInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); renameBtn.click(); }
+      });
+      rows.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); addBtn.click(); }
+      });
+
+      document.getElementById('manage-close').addEventListener('click', closeManage);
+      modal.addEventListener('mousedown', function (e) { if (e.target === modal) closeManage(); });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && modal.classList.contains('open') &&
+            !document.querySelector('#remove-member-modal.open')) closeManage();
+      });
+    })();
+  </script>
+  <script>
+    // "Add member" modal: lets you type several emails (all inputs are named "email")
+    (function () {
+      var modal = document.getElementById('add-member-modal');
+      var extra = document.getElementById('add-member-extra');
+      var addBtn = document.getElementById('add-member-another');
+      if (!modal || !extra || !addBtn) return;
+
+      addBtn.addEventListener('click', function () {
+        var row = document.createElement('div');
+        row.className = 'gm-member-row';
+
+        var field = document.createElement('div');
+        field.className = 'field';
+        var input = document.createElement('input');
+        input.type = 'email';
+        input.name = 'email';
+        input.placeholder = 'friend@example.com';
+        field.appendChild(input);
+
+        var remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'gm-remove';
+        remove.title = 'Remove this email';
+        remove.setAttribute('aria-label', 'Remove this email');
+        remove.textContent = '\u00d7';
+        remove.addEventListener('click', function () { row.remove(); });
+
+        row.appendChild(field);
+        row.appendChild(remove);
+        extra.appendChild(row);
+        input.focus();
+      });
+
+      // start fresh every time the modal is closed
+      new MutationObserver(function () {
+        if (!modal.classList.contains('open')) extra.textContent = '';
+      }).observe(modal, { attributes: true, attributeFilter: ['class'] });
+    })();
+  </script>
+  <script>
+    // Group search: hides the cards that don't match what you typed (group name, owner, and members' names or emails).
+    // Every word you type has to match somewhere in the group.
+    (function () {
+      var input = document.getElementById('group-search');
+      if (!input) return;
+      var cards = Array.prototype.slice.call(document.querySelectorAll('.group-card'));
+      var none = document.getElementById('search-empty');
+
+      // collect the searchable text of each card once (not the button labels)
+      var texts = cards.map(function (card) {
+        var parts = [];
+        var name = card.querySelector('h3');
+        var note = card.querySelector('.card-note');
+        var members = card.querySelector('.member-list');
+        if (name) parts.push(name.textContent);
+        if (note) parts.push(note.textContent);
+        if (members) parts.push(members.textContent);
+        return parts.join(' ').replace(/\s+/g, ' ').toLowerCase();
+      });
+
+      function applySearch() {
+        var terms = input.value.toLowerCase().split(/\s+/).filter(Boolean);
+        var shown = 0;
+        cards.forEach(function (card, i) {
+          var match = terms.every(function (t) { return texts[i].indexOf(t) !== -1; });
+          card.style.display = match ? '' : 'none';
+          if (match) shown++;
+        });
+        if (none) none.style.display = (terms.length && cards.length && !shown) ? '' : 'none';
+      }
+
+      input.addEventListener('input', applySearch);
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') { input.value = ''; applySearch(); }
+      });
+      applySearch();
+    })();
+  </script>
+</body>
+</html>

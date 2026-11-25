@@ -1,0 +1,270 @@
+/* My Groups page (cards, member lists and the group popups).
+   Popup frame, buttons, fields and error box come from base.css. */
+
+.gm-members-label {
+  display: block;
+  font-size: var(--fs-md);
+  margin: var(--space-4) 0 var(--space-2);
+}
+
+.gm-box .card-note { margin: 0 0 var(--space-4); }
+
+.gm-member-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.gm-member-row .field { flex: 1; margin: 0; }
+
+.gm-remove {
+  border: none;
+  background: none;
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: var(--space-1) var(--space-2);
+}
+
+.gm-remove:hover { color: var(--danger); }
+
+#add-member-extra { margin-top: var(--space-2); }
+
+.group-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.group-delete-btn {
+  flex-shrink: 0;
+  width: var(--control-h);
+  height: var(--control-h);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.group-delete-btn:hover,
+.group-delete-btn:focus-visible {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.gm-hidden { display: none; }
+
+.group-title-link { color: inherit; text-decoration: none; }
+.group-title-link:hover { text-decoration: underline; }
+
+/* The card buttons appear when hovering the card */
+.group-hover-actions {
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.group-card:hover .group-hover-actions,
+.group-card:focus-within .group-hover-actions { opacity: 1; }
+
+/* No hover on touch screens, so always show the buttons there */
+@media (hover: none) {
+  .group-hover-actions { opacity: 1; }
+}
+
+/* Group card: info on the left, actions on the right, full width */
+.profile-card.group-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: none;
+}
+
+main:has(.group-card) { max-width: none; }
+
+.group-info { min-width: 0; }
+
+.group-info h3,
+.group-info .card-note {
+  margin-top: 0;
+  margin-bottom: var(--space-1);
+}
+
+.group-side {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.group-side .group-hover-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* Card action buttons (size and shape come from .btn) */
+.group-btn {
+  white-space: nowrap;
+  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition), transform 0.1s ease;
+}
+
+.group-btn svg { flex-shrink: 0; }
+
+.group-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.group-btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.group-btn.btn-ghost { color: var(--text); background: var(--panel); }
+.group-btn.btn-ghost:hover { background: var(--bg); }
+
+/* Stack the card on small screens */
+@media (max-width: 640px) {
+  .profile-card.group-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .group-side { justify-content: space-between; }
+
+  /* owners can have several buttons, so let them wrap */
+  .group-side .group-hover-actions { flex-wrap: wrap; }
+}
+
+/* Remove / Leave button inside the members list */
+.member-list li.has-action {
+  position: relative;
+  padding-right: 64px;
+}
+
+.member-remove-btn {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: none;
+  color: var(--danger);
+  padding: var(--space-1) 0;
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+}
+
+.member-remove-btn:hover,
+.member-remove-btn:focus-visible {
+  color: var(--danger-dark);
+  text-decoration: underline;
+}
+
+/* ---------- Members list: cleaner rows ---------- */
+.gm-box .member-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.gm-box .member-list li,
+.gm-box .member-list li.has-action {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--space-3);
+  row-gap: 2px;
+  padding: var(--space-3) var(--space-1);
+  border-bottom: 1px solid var(--border);
+}
+
+.gm-box .member-list li:last-child { border-bottom: none; }
+
+.gm-box .member-list strong {
+  grid-column: 1;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+}
+
+.gm-box .member-list li span {
+  grid-column: 1;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+/* "Owner" badge */
+.gm-box .member-list em {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  font-style: normal;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+/* Remove / Leave: a small outlined button instead of loose red text */
+.gm-box .member-remove-btn {
+  position: static;
+  transform: none;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--danger-border);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+}
+
+.gm-box .member-remove-btn:hover,
+.gm-box .member-remove-btn:focus-visible {
+  background: var(--danger-soft);
+  text-decoration: none;
+}
+
+/* ---------- "Manage group" popup (rename + members + add members) ---------- */
+.gm-section {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.gm-section-title {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.gm-inline-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.gm-inline-row .field { flex: 1; margin: 0; }
+
+.gm-add-actions {
+  justify-content: space-between;
+  margin-top: var(--space-1);
+}
+
+.gm-manage .member-list { max-height: 240px; }

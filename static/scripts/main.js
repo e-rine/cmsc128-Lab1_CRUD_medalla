@@ -18,6 +18,30 @@ document.addEventListener("click", (event) => {
   }
 });
 
+// ---------- Add task modal ----------
+function openAddModal() {
+  closeAllMenus(null);
+  document.getElementById("add-modal").classList.add("open");
+  document.getElementById("title")?.focus();
+}
+
+function closeAddModal() {
+  document.getElementById("add-modal").classList.remove("open");
+}
+
+// click the dark backdrop to close
+document.getElementById("add-modal")?.addEventListener("click", (event) => {
+  if (event.target.id === "add-modal") closeAddModal();
+});
+
+// Escape closes any open modal
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    closeAddModal();
+    closeDeleteModal();
+  }
+});
+
 // ---------- Inline edit form ----------
 function toggleEditForm(taskId) {
   closeAllMenus(null);
@@ -82,10 +106,16 @@ function finalizePendingDelete(taskId) {
 
   if (currentToastTaskId === taskId) hideUndoToast();
 
-  fetch(`/delete-task/${taskId}`, { method: "DELETE" })
-    .then(() => pending.row.remove())
+  fetch(`/delete-task/${taskId}`, { method: "DELETE", redirect: "manual" })
+    .then((response) => {
+      const deleted = response.ok || response.type === "opaqueredirect";
+      if (!deleted) throw new Error("delete failed");
+      pending.row.remove();
+      if (window.showToast) showToast("Task deleted successfully.", "success");
+    })
     .catch(() => {
       pending.row.classList.remove("pending-delete");
+      if (window.showToast) showToast("Could not delete the task. Please try again.", "error");
     });
 }
 
@@ -128,4 +158,11 @@ window.addEventListener("beforeunload", () => {
   Object.keys(pendingDeletes).forEach((taskId) => {
     navigator.sendBeacon(`/delete-task/${taskId}`);
   });
+});
+
+window.addEventListener("pageshow", (event) => {
+  const nav = performance.getEntriesByType("navigation")[0];
+  if (event.persisted || (nav && nav.type === "back_forward")) {
+    window.location.reload();
+  }
 });
