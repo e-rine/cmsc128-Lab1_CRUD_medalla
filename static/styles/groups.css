@@ -147,7 +147,7 @@
   text-decoration: underline;
 }
 
-/* "See members" / "Add member" appear when hovering the card */
+/* The card buttons appear when hovering the card */
 .group-hover-actions {
   opacity: 0;
   transition: opacity 0.15s ease;
@@ -251,6 +251,11 @@ main:has(.group-card) {
   .group-side {
     justify-content: space-between;
   }
+
+  /* owners now have three buttons (See members, Rename, Add member), so let them wrap */
+  .group-side .group-hover-actions {
+    flex-wrap: wrap;
+  }
 }
 
 /* Remove / Leave button inside the members popup */
@@ -347,4 +352,44 @@ main:has(.group-card) {
 .gm-box .member-remove-btn:focus-visible {
   background: #fef2f2;
   text-decoration: none;
+}
+
+/* ---------- "Manage group" popup (rename + members + add members) ---------- */
+.gm-box.gm-manage {
+  max-width: 540px;
+}
+
+.gm-section {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border, #e5e7eb);
+}
+
+.gm-section-title {
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, #6b7280);
+  margin-bottom: 8px;
+}
+
+.gm-inline-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gm-inline-row .field {
+  flex: 1;
+  margin: 0;
+}
+
+.gm-add-actions {
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.gm-manage .member-list {
+  max-height: 240px;
 }

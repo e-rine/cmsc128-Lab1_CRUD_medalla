@@ -534,6 +534,16 @@ def get_members(list_id):
     conn.close()
     return members
 
+def rename_list(list_id, name):
+    # Doesn't check ownership, so the route must call is_list_owner() first
+    conn = get_db_connection()
+    try:
+        conn.execute("UPDATE lists SET name = ? WHERE id = ?", (name, list_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def delete_list(list_id):
     conn = get_db_connection()
     try:

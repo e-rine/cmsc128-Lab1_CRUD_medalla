@@ -34,6 +34,7 @@ from backend.database import (
     add_member,
     get_members,
     delete_list,
+    rename_list,
     remove_member,
 )
 from backend.mailer import send_reset_email
@@ -838,6 +839,31 @@ def add_group_member(list_id):
     if len(to_add) == 1:
         return group_success(f"{to_add[0]['name']} was added to the group.")
     return group_success(f"{len(to_add)} members were added to the group.")
+
+
+@app.route("/groups/<int:list_id>/rename", methods=["POST"])
+@login_required
+def rename_group(list_id):
+    user_id = session["user_id"]
+
+    # Not a member -> pretend it doesn't exist
+    if get_list_for_user(list_id, user_id) is None:
+        abort(404)
+    if not is_list_owner(list_id, user_id):
+        return group_error("Only the owner can rename this group.")
+
+    name = request.form.get("name", "").strip()
+    if not name:
+        return group_error("Group name can't be empty.")
+    if len(name) > 50:
+        return group_error("Group name must be 50 characters or fewer.")
+
+    old_name = get_list_for_user(list_id, user_id)["name"]
+    if name == old_name:
+        return group_success("The group name is unchanged.")
+
+    rename_list(list_id, name)
+    return group_success(f'Group renamed to "{name}".')
 
 
 @app.route("/groups/<int:list_id>/delete", methods=["POST"])
