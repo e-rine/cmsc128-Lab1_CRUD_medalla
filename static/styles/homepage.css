@@ -5,7 +5,7 @@
 .text-danger { color: var(--danger); }
 .text-success { color: var(--success); }
 
-.home { max-width: 1100px; }
+.home { width: 100%; }   /* uses the full width of the page; the grids below resize with it */
 
 /* ---------- Hero ---------- */
 .home-hero {
