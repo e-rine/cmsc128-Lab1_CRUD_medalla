@@ -1,0 +1,179 @@
+/* Sidebar: the left navigation used on every page after login.
+   Included by sidebar.html, so it loads wherever the sidebar does.
+   Colors come from the variables in my_tasks.css (:root) and from the theme. */
+
+/* ---------- Sidebar ---------- */
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  padding: 24px 20px 12px;
+  display: flex;
+  flex-direction: column;
+  position: sticky;      /* stays pinned to the screen while the page scrolls */
+  top: 0;
+  height: 100vh;
+  align-self: flex-start;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 32px;
+}
+
+.brand span { color: var(--primary); }
+
+.brand-mark {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  margin-right: -6px;     /* pulls the text closer to the logo */
+  /* The logo is used as a stencil: only its shape is kept and it is filled with the
+     theme color, so it recolors itself whenever the theme changes. */
+  background: var(--primary);
+  -webkit-mask: url("../images/logo.png") center / contain no-repeat;
+  mask: url("../images/logo.png") center / contain no-repeat;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-nav a {
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.92rem;
+}
+
+.sidebar-nav a:hover { background: var(--bg); }
+
+.sidebar-nav a.active {
+  background: rgba(79, 70, 229, 0.1);
+  color: var(--primary);
+}
+
+.sidebar-foot {
+  margin-top: auto;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.sidebar-account {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  min-width: 0;
+}
+
+a.sidebar-user {
+  color: inherit;
+  text-decoration: none;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+a.sidebar-user:hover { background: var(--bg); border-color: var(--primary); }
+
+a.sidebar-user.active {
+  background: rgba(79, 70, 229, 0.08);
+  border-color: var(--primary);
+}
+
+.sidebar-userinfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.sidebar-userhint {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.sidebar-avatar {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(79, 70, 229, 0.1);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.sidebar-username {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-logout {
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.sidebar-logout:hover { background: var(--bg); color: var(--danger); }
+
+/* Medium windows: the sidebar stays on the left, just a bit slimmer */
+@media (max-width: 860px) {
+  .sidebar { width: 210px; padding: 24px 14px 12px; }
+}
+
+/* Phone-sized windows only: the sidebar becomes a bar across the top */
+@media (max-width: 560px) {
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    position: static;
+    height: auto;
+    padding: 16px 20px;
+  }
+  .brand { margin-bottom: 0; }
+  .sidebar-nav { flex-direction: row; flex-wrap: wrap; gap: 2px; }
+  .sidebar-foot { display: none; }
+  .sidebar-account {
+    margin-top: 0;
+    margin-left: auto;
+    padding-top: 0;
+    border-top: none;
+    flex-direction: row;
+    align-items: center;
+  }
+  .sidebar-userinfo { display: none; }
+}

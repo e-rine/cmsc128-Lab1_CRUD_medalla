@@ -1,0 +1,67 @@
+/* Flash messages shown as small pop-ups at the bottom of the screen (see scripts/toasts.js).
+   The old inline banners are hidden; toasts.js turns each one into a toast. */
+
+.flash-message { display: none; }
+
+.toast-stack {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  max-width: min(92vw, 520px);
+  z-index: 300;
+  pointer-events: none;            /* only the toasts themselves can be clicked */
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #1f2430;
+  color: #fff;
+  padding: 12px 14px 12px 16px;
+  border-radius: 10px;
+  font-size: 0.86rem;
+  line-height: 1.35;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  pointer-events: auto;
+  animation: toast-in 0.2s ease-out;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.toast.leaving { opacity: 0; transform: translateY(8px); }
+
+/* small colored dot in front of the text */
+.toast::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #a5b4fc;
+}
+.toast-success::before { background: #34d399; }
+.toast-error::before { background: #f87171; }
+
+.toast-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+
+.toast-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+}
+.toast-close:hover { color: #fff; }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

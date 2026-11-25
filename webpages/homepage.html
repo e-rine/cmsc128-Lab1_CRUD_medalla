@@ -85,7 +85,7 @@
                 <a href="/my-tasks" class="card-link">View all</a>
               </div>
 
-              {% for task in due_soon %}
+              {% for task in due_soon[:3] %}   {# show at most 3 #}
               <div class="due-row{% if task|is_overdue %} is-overdue{% endif %}">
                 <form action="/toggle-task/{{ task['id'] }}" method="POST">
                   <input type="checkbox" class="task-check" title="Mark as done" onchange="this.form.submit()" />

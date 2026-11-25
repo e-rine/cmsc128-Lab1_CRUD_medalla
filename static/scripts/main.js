@@ -106,10 +106,16 @@ function finalizePendingDelete(taskId) {
 
   if (currentToastTaskId === taskId) hideUndoToast();
 
-  fetch(`/delete-task/${taskId}`, { method: "DELETE" })
-    .then(() => pending.row.remove())
+  fetch(`/delete-task/${taskId}`, { method: "DELETE", redirect: "manual" })
+    .then((response) => {
+      const deleted = response.ok || response.type === "opaqueredirect";
+      if (!deleted) throw new Error("delete failed");
+      pending.row.remove();
+      if (window.showToast) showToast("Task deleted successfully.", "success");
+    })
     .catch(() => {
       pending.row.classList.remove("pending-delete");
+      if (window.showToast) showToast("Could not delete the task. Please try again.", "error");
     });
 }
 
