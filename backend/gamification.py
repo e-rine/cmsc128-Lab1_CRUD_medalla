@@ -1,16 +1,5 @@
-"""SideQuest gamification: XP with a daily cap, daily quests, streaks and color themes.
+# Gamification Rules
 
-It keeps everything in its OWN tables (xp_events, gamification_meta) and the shared user_prefs table,
-so database.py does not need to change. It only reads the tasks table.
-
-How XP works
-  * Finishing a task gives XP by priority (low 10, medium 20, high 30).
-  * Task XP is capped per day (DAILY_TASK_XP_CAP), so splitting one big task into
-    many tiny ones can't be used to farm XP.
-  * Each task pays out only ONCE, ever. Un-ticking and re-ticking it earns nothing.
-  * Each daily quest you finish pays QUEST_XP on top. Quest XP is not part of the cap.
-  * Levels: every XP_PER_LEVEL XP is one level.
-"""
 from datetime import date, datetime, timedelta
 
 from backend.database import get_db_connection, table_columns, table_exists
@@ -23,7 +12,7 @@ QUESTS_PER_DAY = 3
 XP_PER_LEVEL = 100
 
 # Edit unlock themes 
-UNLOCK_ALL_THEMES = True
+UNLOCK_ALL_THEMES = False
 
 
 # ---------- Daily quest templates ----------
