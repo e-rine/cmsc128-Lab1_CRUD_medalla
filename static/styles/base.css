@@ -163,6 +163,33 @@ body:not(.welcome-page) .content:not(:has(.topbar))::before {
   font-size: var(--fs-sm);
 }
 
+/* ---------- Brand (logo + name): same look in the sidebar, welcome and login pages ---------- */
+.brand {
+  font-weight: var(--fw-bold);
+  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: var(--space-8);
+}
+
+.brand span { color: var(--primary); }
+
+.brand-mark {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  margin-right: -6px;     /* pulls the text closer to the logo */
+  /* The logo is used as a stencil: only its shape is kept and it is filled with the
+     theme color, so it recolors itself whenever the theme changes. */
+  background: var(--primary);
+  -webkit-mask: url("../images/logo.png") center / contain no-repeat;
+  mask: url("../images/logo.png") center / contain no-repeat;
+}
+
+/* big logo in the middle of the welcome page */
+.brand-mark-lg { width: 84px; height: 84px; margin-right: 0; }
+
 /* ---------- Messages ---------- */
 .flash-message,
 .gm-error {

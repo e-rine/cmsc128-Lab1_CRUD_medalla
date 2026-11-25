@@ -16,28 +16,7 @@
   align-self: flex-start;
 }
 
-.brand {
-  font-weight: var(--fw-bold);
-  font-size: 1.15rem;
-  display: flex;
-  align-items: center;
-  gap: 0;
-  margin-bottom: var(--space-8);
-}
-
-.brand span { color: var(--primary); }
-
-.brand-mark {
-  width: 40px;
-  height: 40px;
-  flex-shrink: 0;
-  margin-right: -6px;     /* pulls the text closer to the logo */
-  /* The logo is used as a stencil: only its shape is kept and it is filled with the
-     theme color, so it recolors itself whenever the theme changes. */
-  background: var(--primary);
-  -webkit-mask: url("../images/logo.png") center / contain no-repeat;
-  mask: url("../images/logo.png") center / contain no-repeat;
-}
+/* .brand and .brand-mark (logo + name) live in base.css so every page shares them */
 
 .sidebar-nav {
   display: flex;

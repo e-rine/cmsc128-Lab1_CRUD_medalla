@@ -4,6 +4,20 @@
 @import url("variables.css");
 @import url("base.css");
 
+/* "Back to groups" button on a group's task list */
+.page-heading-row > .back-btn {      /* beats the big main-action size from base.css */
+  height: var(--control-h);
+  padding: 0 var(--space-4);
+  font-size: var(--fs-md);
+  flex-shrink: 0;
+  align-self: flex-end;
+  color: var(--text);
+  background: var(--panel);
+  transition: background var(--transition), box-shadow var(--transition);
+}
+
+.page-heading-row > .back-btn:hover { background: var(--bg); box-shadow: var(--shadow-sm); }
+
 /* ---------- Filter bar ---------- */
 .filter-bar { margin-bottom: var(--gap-card); }
 
@@ -105,6 +119,23 @@
 .deadline-time { color: var(--text-muted); font-size: var(--fs-md); }
 .deadline-text { font-size: var(--fs-md); }
 .deadline-text.overdue { color: var(--danger); font-weight: var(--fw-semibold); }
+
+/* Group lists only: extra "Added by" column between Category and the buttons */
+@media (min-width: 861px) {
+  .task-table.has-added-by .task-table-header,
+  .task-table.has-added-by .task-row {
+    grid-template-columns: 32px 2fr 0.9fr 0.7fr 0.8fr 0.8fr 1fr 100px;   /* check, task, deadline, time, priority, category, added by, buttons */
+  }
+}
+
+.col-added-by {
+  min-width: 0;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .task-actions {
   display: flex;
@@ -242,4 +273,6 @@
   }
   .task-actions { justify-content: flex-start; }
   .col-time { margin-top: -4px; }      /* on small windows the time sits right under the date */
+  .col-added-by::before { content: "Added by "; color: var(--text-muted); font-weight: 400; }
+  .col-added-by:empty { display: none; }
 }

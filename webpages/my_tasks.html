@@ -27,12 +27,17 @@
           <div class="page-heading">
             {% if current_list %}
             <h1>{{ current_list['name'] }}</h1>
-            <p>Collaborative To-Do-List &middot; Everyone in the group can edit and see these tasks. <a href="/groups">Back to groups</a></p>
+            <p>Collaborative To-Do-List &middot; Everyone in the group can edit and see these tasks.</p>
             {% else %}
             <h1>My Tasks</h1>
             <p>Add a task and set exactly when it's due.</p>
             {% endif %}
           </div>
+          {% if current_list %}
+          <a href="/groups" class="btn btn-ghost back-btn">
+            Back to groups
+          </a>
+          {% endif %}
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -96,7 +101,7 @@
         </section>
 
         <!-- Task list -->
-        <section class="task-table">
+        <section class="task-table{% if current_list %} has-added-by{% endif %}">
 
           <div class="task-table-header">
             <span></span>
@@ -105,6 +110,7 @@
             <span>Time</span>
             <span>Priority</span>
             <span>Category</span>
+            {% if current_list %}<span>Added by</span>{% endif %}
             <span></span>
           </div>
 
@@ -126,9 +132,6 @@
 
             <div class="task-body" role="button" tabindex="0" title="View details" data-id="{{ task['id'] }}">
               <div class="task-title">{{ task['title'] }}</div>
-              {% if current_list and task['creator_name'] %}
-              <div class="task-description task-added-by">Added by {{ task['creator_name'] }}</div>
-              {% endif %}
               {% if task['description'] %}
               <div class="task-description">{{ task['description'] }}</div>
               {% endif %}
@@ -150,6 +153,10 @@
             <div class="col-category">
               <span class="category-pill category-{{ task['category'] }}">{{ task['category']|capitalize }}</span>
             </div>
+
+            {% if current_list %}
+            <div class="col-added-by">{{ task['creator_name'] or '' }}</div>
+            {% endif %}
 
             <div class="task-actions">
               <button type="button" class="btn btn-ghost btn-small" data-id="{{ task['id'] }}" onclick="openTaskModal(this.dataset.id, true)">Edit</button>
